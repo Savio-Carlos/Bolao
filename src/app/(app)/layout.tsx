@@ -23,6 +23,9 @@ export default async function AppLayout({
           <Link href="/" className="hover:text-green-600">
             Jogos
           </Link>
+          <Link href="/classificacao" className="hover:text-green-600">
+            Classificação
+          </Link>
           <Link href="/palpites" className="hover:text-green-600">
             Meus palpites
           </Link>
