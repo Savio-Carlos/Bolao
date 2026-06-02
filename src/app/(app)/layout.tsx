@@ -26,6 +26,9 @@ export default async function AppLayout({
           <Link href="/palpites" className="hover:text-green-600">
             Meus palpites
           </Link>
+          <Link href="/torneio" className="hover:text-green-600">
+            Copa
+          </Link>
           <Link href="/ranking" className="hover:text-green-600">
             Ranking
           </Link>

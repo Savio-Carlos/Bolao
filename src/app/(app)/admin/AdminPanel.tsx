@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { CategoryMeta, TournamentKey } from "@/lib/tournament";
 
 export interface AdminUser {
   id: number;
@@ -13,16 +14,40 @@ export default function AdminPanel({
   users,
   myId,
   matchCount,
+  categories,
+  resultInitial,
 }: {
   users: AdminUser[];
   myId: number;
   matchCount: number;
+  categories: CategoryMeta[];
+  resultInitial: Record<TournamentKey, string>;
 }) {
   const router = useRouter();
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [result, setResult] =
+    useState<Record<TournamentKey, string>>(resultInitial);
+
+  async function saveResult() {
+    setBusy(true);
+    setErr(null);
+    const res = await fetch("/api/admin/tournament-result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(result),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      flash(setMsg, `Gabarito salvo. ${data.updated} pontuação(ões) atualizada(s).`);
+      router.refresh();
+    } else {
+      flash(setErr, data.error ?? "Erro ao salvar o gabarito.");
+    }
+    setBusy(false);
+  }
 
   function flash(setter: (v: string | null) => void, text: string) {
     setter(text);
@@ -100,6 +125,42 @@ export default function AdminPanel({
           className="self-start rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
         >
           Sincronizar agora
+        </button>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Gabarito da Copa</h2>
+        <p className="text-sm text-neutral-500">
+          Preencha o resultado oficial ao fim da Copa. Ao salvar, os pontos de
+          bônus de todos os palpites são recalculados automaticamente.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {categories.map((c) => (
+            <label key={c.key} className="flex flex-col gap-1">
+              <span className="text-sm text-neutral-500">
+                {c.label}{" "}
+                <span className="text-xs text-neutral-400">
+                  ({c.points} pts)
+                </span>
+              </span>
+              <input
+                type="text"
+                value={result[c.key]}
+                onChange={(e) =>
+                  setResult((r) => ({ ...r, [c.key]: e.target.value }))
+                }
+                placeholder="resultado oficial"
+                className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
+              />
+            </label>
+          ))}
+        </div>
+        <button
+          onClick={saveResult}
+          disabled={busy}
+          className="self-start rounded-lg bg-amber-600 px-4 py-2 font-medium text-white transition hover:bg-amber-700 disabled:opacity-50"
+        >
+          Salvar gabarito e recalcular
         </button>
       </section>
 

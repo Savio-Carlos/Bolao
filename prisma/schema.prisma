@@ -11,11 +11,41 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  username    String       @unique
-  isAdmin     Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  predictions Prediction[]
+  id            Int            @id @default(autoincrement())
+  username      String         @unique
+  isAdmin       Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  predictions   Prediction[]
+  tournamentBet TournamentBet?
+}
+
+// Palpites de longo prazo de cada pessoa (um conjunto por usuário), feitos antes
+// da Copa e valendo bônus. Corrigidos quando o admin grava o TournamentResult.
+model TournamentBet {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  champion     String?
+  runnerUp     String?
+  topScorer    String?
+  bestPlayer   String?
+  surpriseTeam String?
+  biggestUpset String?
+  points       Int? // total após a correção do admin
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Gabarito oficial (linha única, id = 1) preenchido pelo admin ao fim da Copa.
+model TournamentResult {
+  id           Int      @id @default(1)
+  champion     String?
+  runnerUp     String?
+  topScorer    String?
+  bestPlayer   String?
+  surpriseTeam String?
+  biggestUpset String?
+  updatedAt    DateTime @updatedAt
 }
 
 model Match {

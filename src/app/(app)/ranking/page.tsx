@@ -6,9 +6,13 @@ export const dynamic = "force-dynamic";
 export default async function RankingPage() {
   const me = await getCurrentUser();
 
-  const [users, predictions] = await Promise.all([
+  const [users, predictions, tournamentBets] = await Promise.all([
     prisma.user.findMany({ orderBy: { username: "asc" } }),
     prisma.prediction.findMany({
+      where: { points: { not: null } },
+      select: { userId: true, points: true },
+    }),
+    prisma.tournamentBet.findMany({
       where: { points: { not: null } },
       select: { userId: true, points: true },
     }),
@@ -16,15 +20,22 @@ export default async function RankingPage() {
 
   const stats = new Map<
     number,
-    { total: number; exact: number; partial: number }
+    { total: number; bonus: number; exact: number; partial: number }
   >();
-  for (const u of users) stats.set(u.id, { total: 0, exact: 0, partial: 0 });
+  for (const u of users)
+    stats.set(u.id, { total: 0, bonus: 0, exact: 0, partial: 0 });
   for (const p of predictions) {
     const s = stats.get(p.userId);
     if (!s) continue;
     s.total += p.points ?? 0;
     if (p.points === 10) s.exact++;
     else if (p.points === 5) s.partial++;
+  }
+  for (const b of tournamentBets) {
+    const s = stats.get(b.userId);
+    if (!s) continue;
+    s.bonus += b.points ?? 0;
+    s.total += b.points ?? 0;
   }
 
   const rows = users
@@ -42,6 +53,7 @@ export default async function RankingPage() {
               <th className="px-3 py-2">Jogador</th>
               <th className="px-3 py-2 text-center">Exatos</th>
               <th className="px-3 py-2 text-center">Parciais</th>
+              <th className="px-3 py-2 text-center">Bônus</th>
               <th className="px-3 py-2 text-right">Pontos</th>
             </tr>
           </thead>
@@ -61,6 +73,9 @@ export default async function RankingPage() {
                 <td className="px-3 py-2 text-center tabular-nums">
                   {r.partial}
                 </td>
+                <td className="px-3 py-2 text-center tabular-nums text-amber-600 dark:text-amber-400">
+                  {r.bonus || "—"}
+                </td>
                 <td className="px-3 py-2 text-right text-lg font-bold tabular-nums">
                   {r.total}
                 </td>
@@ -70,7 +85,8 @@ export default async function RankingPage() {
         </table>
       </div>
       <p className="text-xs text-neutral-400">
-        10 pontos por placar exato · 5 por acertar o vencedor/empate.
+        10 pontos por placar exato · 5 por acertar o vencedor/empate · Bônus =
+        palpites da Copa (Campeão, Vice, etc.).
       </p>
     </div>
   );
