@@ -32,6 +32,9 @@ export default async function AppLayout({
           <Link href="/ranking" className="hover:text-green-600">
             Ranking
           </Link>
+          <Link href="/estatisticas" className="hover:text-green-600">
+            Stats
+          </Link>
           {user.isAdmin && (
             <Link href="/admin" className="hover:text-green-600">
               Admin
