@@ -19,6 +19,15 @@ export interface EditableMatch {
 
 type Scores = Record<number, { home: string; away: string }>;
 
+function Crest({ src }: { src: string | null }) {
+  if (!src)
+    return (
+      <span className="inline-block h-5 w-5 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+    );
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" className="h-5 w-5 shrink-0 object-contain" />;
+}
+
 export default function PredictionsEditor({
   matches,
 }: {
@@ -112,9 +121,10 @@ export default function PredictionsEditor({
               {formatDay(new Date(m.kickoff))} às {formatTime(new Date(m.kickoff))}
             </div>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <span className="truncate text-right font-medium">
-                {m.homeTeam}
-              </span>
+              <div className="flex min-w-0 items-center justify-end gap-2">
+                <span className="truncate font-medium">{m.homeTeam}</span>
+                <Crest src={m.homeCrest} />
+              </div>
               <div className="flex items-center gap-1">
                 <input
                   inputMode="numeric"
@@ -132,7 +142,10 @@ export default function PredictionsEditor({
                   placeholder="-"
                 />
               </div>
-              <span className="truncate font-medium">{m.awayTeam}</span>
+              <div className="flex min-w-0 items-center gap-2">
+                <Crest src={m.awayCrest} />
+                <span className="truncate font-medium">{m.awayTeam}</span>
+              </div>
             </div>
           </li>
         ))}
