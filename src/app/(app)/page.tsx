@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { dayKey, formatDay, formatTime, isLive, statusLabel } from "@/lib/format";
 import { groupLabel, stageLabel } from "@/lib/football/types";
@@ -62,10 +63,11 @@ export default async function CronogramaPage() {
             {dayMatches.map((m) => {
               const decided = m.homeScore !== null && m.awayScore !== null;
               return (
-                <li
-                  key={m.id}
-                  className="rounded-xl border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-neutral-900"
-                >
+                <li key={m.id}>
+                  <Link
+                    href={`/jogos/${m.id}`}
+                    className="block rounded-xl border border-black/10 bg-white p-3 transition hover:border-green-600/60 dark:border-white/10 dark:bg-neutral-900"
+                  >
                   <div className="mb-1 flex items-center justify-between text-xs text-neutral-500">
                     <span>
                       {stageLabel(m.stage)}
@@ -96,6 +98,10 @@ export default async function CronogramaPage() {
                       align="right"
                     />
                   </div>
+                  <div className="mt-1 text-right text-xs text-neutral-400">
+                    ver palpites →
+                  </div>
+                  </Link>
                 </li>
               );
             })}
