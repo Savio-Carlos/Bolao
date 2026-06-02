@@ -2,12 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CategoryMeta, TournamentKey } from "@/lib/tournament";
+import { UPSET, UPSET_STAGES, type CategoryMeta } from "@/lib/tournament";
 
 export interface AdminUser {
   id: number;
   username: string;
   isAdmin: boolean;
+}
+
+export interface ResultValues {
+  champion: string;
+  runnerUp: string;
+  topScorer: string;
+  bestPlayer: string;
+  upsetTeam: string;
+  upsetStage: string;
 }
 
 export default function AdminPanel({
@@ -16,20 +25,21 @@ export default function AdminPanel({
   matchCount,
   categories,
   resultInitial,
+  teams,
 }: {
   users: AdminUser[];
   myId: number;
   matchCount: number;
   categories: CategoryMeta[];
-  resultInitial: Record<TournamentKey, string>;
+  resultInitial: ResultValues;
+  teams: string[];
 }) {
   const router = useRouter();
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [result, setResult] =
-    useState<Record<TournamentKey, string>>(resultInitial);
+  const [result, setResult] = useState<ResultValues>(resultInitial);
 
   async function saveResult() {
     setBusy(true);
@@ -134,6 +144,11 @@ export default function AdminPanel({
           Preencha o resultado oficial ao fim da Copa. Ao salvar, os pontos de
           bônus de todos os palpites são recalculados automaticamente.
         </p>
+        <datalist id="gabarito-teams">
+          {teams.map((t) => (
+            <option key={t} value={t} />
+          ))}
+        </datalist>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {categories.map((c) => (
             <label key={c.key} className="flex flex-col gap-1">
@@ -149,11 +164,52 @@ export default function AdminPanel({
                 onChange={(e) =>
                   setResult((r) => ({ ...r, [c.key]: e.target.value }))
                 }
+                list={c.type === "team" ? "gabarito-teams" : undefined}
                 placeholder="resultado oficial"
                 className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
               />
             </label>
           ))}
+          <label className="flex flex-col gap-1">
+            <span className="text-sm text-neutral-500">
+              Maior zebra — seleção{" "}
+              <span className="text-xs text-neutral-400">
+                ({UPSET.teamPoints} pts)
+              </span>
+            </span>
+            <input
+              type="text"
+              value={result.upsetTeam}
+              onChange={(e) =>
+                setResult((r) => ({ ...r, upsetTeam: e.target.value }))
+              }
+              list="gabarito-teams"
+              placeholder="seleção zebra"
+              className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm text-neutral-500">
+              Maior zebra — fase{" "}
+              <span className="text-xs text-neutral-400">
+                ({UPSET.stagePoints} pts)
+              </span>
+            </span>
+            <select
+              value={result.upsetStage}
+              onChange={(e) =>
+                setResult((r) => ({ ...r, upsetStage: e.target.value }))
+              }
+              className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
+            >
+              <option value="">—</option>
+              {UPSET_STAGES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <button
           onClick={saveResult}

@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import {
-  TOURNAMENT_CATEGORIES,
-  type TournamentKey,
-} from "@/lib/tournament";
-import AdminPanel, { type AdminUser } from "./AdminPanel";
+import { SIMPLE_CATEGORIES } from "@/lib/tournament";
+import AdminPanel, { type AdminUser, type ResultValues } from "./AdminPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +11,14 @@ export default async function AdminPage() {
   if (!me) redirect("/login");
   if (!me.isAdmin) redirect("/");
 
-  const [users, matchCount, result] = await Promise.all([
+  const [users, matchCount, result, groupMatches] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.match.count(),
     prisma.tournamentResult.findUnique({ where: { id: 1 } }),
+    prisma.match.findMany({
+      where: { stage: "GROUP_STAGE" },
+      select: { homeTeam: true, awayTeam: true },
+    }),
   ]);
 
   const list: AdminUser[] = users.map((u) => ({
@@ -26,12 +27,22 @@ export default async function AdminPage() {
     isAdmin: u.isAdmin,
   }));
 
-  const resultInitial = Object.fromEntries(
-    TOURNAMENT_CATEGORIES.map((c) => [
-      c.key,
-      (result?.[c.key] as string | null) ?? "",
-    ]),
-  ) as Record<TournamentKey, string>;
+  const teams = [
+    ...new Set(
+      groupMatches
+        .flatMap((m) => [m.homeTeam, m.awayTeam])
+        .filter((t): t is string => !!t),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  const resultInitial: ResultValues = {
+    champion: result?.champion ?? "",
+    runnerUp: result?.runnerUp ?? "",
+    topScorer: result?.topScorer ?? "",
+    bestPlayer: result?.bestPlayer ?? "",
+    upsetTeam: result?.upsetTeam ?? "",
+    upsetStage: result?.upsetStage ?? "",
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,8 +51,9 @@ export default async function AdminPage() {
         users={list}
         myId={me.id}
         matchCount={matchCount}
-        categories={TOURNAMENT_CATEGORIES}
+        categories={SIMPLE_CATEGORIES}
         resultInitial={resultInitial}
+        teams={teams}
       />
     </div>
   );

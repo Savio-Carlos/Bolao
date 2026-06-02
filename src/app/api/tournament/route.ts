@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import {
-  TOURNAMENT_CATEGORIES,
+  ALL_KEYS,
   tournamentDeadlineOpen,
-  type TournamentKey,
+  type TournamentFields,
 } from "@/lib/tournament";
 
 export const dynamic = "force-dynamic";
@@ -24,14 +24,11 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  const data: Record<TournamentKey, string | null> = {} as Record<
-    TournamentKey,
-    string | null
-  >;
-  for (const cat of TOURNAMENT_CATEGORIES) {
-    const raw = body[cat.key];
+  const data = {} as TournamentFields;
+  for (const key of ALL_KEYS) {
+    const raw = body[key];
     const value = typeof raw === "string" ? raw.trim().slice(0, 80) : "";
-    data[cat.key] = value === "" ? null : value;
+    data[key] = value === "" ? null : value;
   }
 
   await prisma.tournamentBet.upsert({
