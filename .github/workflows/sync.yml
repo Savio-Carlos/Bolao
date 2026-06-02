@@ -1,0 +1,24 @@
+name: Sincronizar jogos do bolão
+
+# Chama /api/sync periodicamente para atualizar jogos e resultados sozinho.
+# Configure dois secrets no repositório (Settings > Secrets and variables > Actions):
+#   APP_URL     -> URL pública do site, ex: https://bolao-xxxx.ondigitalocean.app
+#   SYNC_SECRET -> mesmo valor da env SYNC_SECRET no DigitalOcean
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # a cada 10 minutos (UTC)
+  workflow_dispatch: {} # permite rodar manualmente pelo GitHub
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar endpoint de sincronização
+        run: |
+          curl -fsS -X POST "${APP_URL}/api/sync" \
+            -H "Authorization: Bearer ${SYNC_SECRET}" \
+            --max-time 60
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}

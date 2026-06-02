@@ -1,0 +1,56 @@
+// Schema do bolão da Copa do Mundo 2026
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  username    String       @unique
+  isAdmin     Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  predictions Prediction[]
+}
+
+model Match {
+  id          Int          @id @default(autoincrement())
+  externalId  Int          @unique
+  // stage/status/winner são String (não enum) para o sync não quebrar caso a
+  // API envie um valor inesperado. A ordem de exibição é controlada no código.
+  stage       String // GROUP_STAGE, LAST_32, LAST_16, QUARTER_FINALS, SEMI_FINALS, THIRD_PLACE, FINAL
+  group       String? // GROUP_A ... GROUP_L (só na fase de grupos)
+  homeTeam    String? // null no mata-mata enquanto o time não é definido
+  awayTeam    String?
+  homeCrest   String?
+  awayCrest   String?
+  kickoff     DateTime
+  status      String       @default("SCHEDULED") // SCHEDULED, TIMED, IN_PLAY, PAUSED, FINISHED, ...
+  homeScore   Int?
+  awayScore   Int?
+  winner      String? // HOME, AWAY, DRAW
+  updatedAt   DateTime     @updatedAt
+  predictions Prediction[]
+
+  @@index([kickoff])
+}
+
+model Prediction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  matchId   Int
+  homeScore Int
+  awayScore Int
+  points    Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+}
