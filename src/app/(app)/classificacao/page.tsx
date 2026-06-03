@@ -1,38 +1,30 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { isLive, statusLabel } from "@/lib/format";
-import { groupLabel, stageLabel, stageRank } from "@/lib/football/types";
+import { stageLabel, stageRank } from "@/lib/football/types";
 import { computeGroupStandings } from "@/lib/standings";
+import { Crest } from "@/components/Crest";
 
 export const dynamic = "force-dynamic";
 
 type Match = Awaited<ReturnType<typeof prisma.match.findMany>>[number];
 
-function BracketTeam({
+function BracketRow({
   name,
   crest,
   score,
-  bold,
+  outcome,
 }: {
   name: string | null;
   crest: string | null;
   score: number | null;
-  bold: boolean;
+  outcome: "win" | "lose" | "";
 }) {
   return (
-    <div className="flex items-center gap-2">
-      {crest ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={crest} alt="" className="h-4 w-4 shrink-0 object-contain" />
-      ) : (
-        <span className="inline-block h-4 w-4 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-      )}
-      <span className={`flex-1 truncate ${bold ? "font-bold" : ""}`}>
-        {name ?? "A definir"}
-      </span>
-      {score !== null && (
-        <span className="tabular-nums text-neutral-500">{score}</span>
-      )}
+    <div className={`row${outcome ? ` ${outcome}` : ""}`}>
+      <Crest src={crest} size="xs" />
+      <span className="nm">{name ?? "A definir"}</span>
+      <span className="sc">{score ?? "—"}</span>
     </div>
   );
 }
@@ -42,17 +34,35 @@ export default async function ClassificacaoPage() {
 
   if (matches.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Classificação</h1>
-        <div className="rounded-xl border border-dashed border-black/15 p-8 text-center text-neutral-500 dark:border-white/15">
-          Nenhum jogo carregado ainda. Um admin precisa sincronizar os jogos na
-          área de <strong>Admin</strong>.
+      <>
+        <header className="page-head">
+          <p className="kicker">★ Quem avança no mundial</p>
+          <h1>
+            A <em>Classificação</em>
+          </h1>
+          <div className="page-rule" />
+        </header>
+        <div
+          className="alm-table-wrap"
+          style={{ padding: "32px", textAlign: "center" }}
+        >
+          <p className="legend" style={{ justifyContent: "center" }}>
+            Nenhum jogo carregado ainda. Um admin precisa sincronizar os jogos na
+            área de <b>Admin</b>.
+          </p>
         </div>
-      </div>
+      </>
     );
   }
 
   const standings = computeGroupStandings(matches);
+
+  // Escudos por nome de seleção (a partir dos jogos), para enfeitar as tabelas.
+  const crestByTeam = new Map<string, string>();
+  for (const m of matches) {
+    if (m.homeTeam && m.homeCrest) crestByTeam.set(m.homeTeam, m.homeCrest);
+    if (m.awayTeam && m.awayCrest) crestByTeam.set(m.awayTeam, m.awayCrest);
+  }
 
   // Mata-mata agrupado por fase, em ordem.
   const knockout = matches.filter((m) => m.stage !== "GROUP_STAGE");
@@ -66,131 +76,164 @@ export default async function ClassificacaoPage() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      <h1 className="text-2xl font-bold">Classificação</h1>
-
-      {/* Fase de grupos */}
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Fase de grupos</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {standings.map(({ group, rows }) => (
-            <div
-              key={group}
-              className="overflow-hidden rounded-xl border border-black/10 dark:border-white/10"
-            >
-              <div className="bg-neutral-100 px-3 py-2 text-sm font-semibold dark:bg-neutral-800">
-                {groupLabel(group)}
-              </div>
-              <table className="w-full text-xs">
-                <thead className="text-neutral-400">
-                  <tr>
-                    <th className="px-2 py-1 text-left font-medium">#</th>
-                    <th className="px-1 py-1 text-left font-medium">Seleção</th>
-                    <th className="px-1 py-1 text-center font-medium">P</th>
-                    <th className="px-1 py-1 text-center font-medium">J</th>
-                    <th className="px-1 py-1 text-center font-medium">V</th>
-                    <th className="px-1 py-1 text-center font-medium">E</th>
-                    <th className="px-1 py-1 text-center font-medium">D</th>
-                    <th className="px-2 py-1 text-center font-medium">SG</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r, i) => (
-                    <tr
-                      key={r.team}
-                      className={`border-t border-black/5 dark:border-white/5 ${
-                        i < 2
-                          ? "bg-green-50 dark:bg-green-950/30"
-                          : i === 2
-                            ? "bg-amber-50 dark:bg-amber-950/20"
-                            : ""
-                      }`}
-                    >
-                      <td className="px-2 py-1 text-neutral-400">{i + 1}</td>
-                      <td className="px-1 py-1 font-medium">{r.team}</td>
-                      <td className="px-1 py-1 text-center font-bold tabular-nums">
-                        {r.points}
-                      </td>
-                      <td className="px-1 py-1 text-center tabular-nums">
-                        {r.played}
-                      </td>
-                      <td className="px-1 py-1 text-center tabular-nums">
-                        {r.won}
-                      </td>
-                      <td className="px-1 py-1 text-center tabular-nums">
-                        {r.drawn}
-                      </td>
-                      <td className="px-1 py-1 text-center tabular-nums">
-                        {r.lost}
-                      </td>
-                      <td className="px-2 py-1 text-center tabular-nums">
-                        {r.gd > 0 ? `+${r.gd}` : r.gd}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-neutral-400">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-400 align-middle" />{" "}
-          1º e 2º classificam direto ·{" "}
-          <span className="inline-block h-2 w-2 rounded-full bg-amber-300 align-middle" />{" "}
-          os 8 melhores 3ºs também avançam. Critérios: pontos → saldo → gols pró.
+    <>
+      <header className="page-head">
+        <p className="kicker">★ Quem avança no mundial</p>
+        <h1>
+          A <em>Classificação</em>
+        </h1>
+        <p className="sub">
+          Os dois primeiros de cada grupo avançam direto, mais os{" "}
+          <b>8 melhores terceiros</b>. Critério de desempate: pontos → saldo de
+          gols → gols pró.
         </p>
+        <div className="page-rule" />
+      </header>
+
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Fase de grupos
+        </h2>
+        <span className="bar" />
+      </div>
+
+      <section className="groups">
+        {standings.map(({ group, rows }) => (
+          <div className="gcard" key={group}>
+            <h3>
+              <span>Grupo</span>
+              <span className="gn">{group.replace("GROUP_", "")}</span>
+            </h3>
+            <table className="gtable">
+              <thead>
+                <tr>
+                  <th className="l">Seleção</th>
+                  <th>P</th>
+                  <th>J</th>
+                  <th>V</th>
+                  <th>E</th>
+                  <th>D</th>
+                  <th>SG</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr
+                    key={r.team}
+                    className={i < 2 ? "q1" : i === 2 ? "q2" : ""}
+                  >
+                    <td className="tm">
+                      <div className="tm-in">
+                        <span className="pos">{i + 1}</span>
+                        <Crest src={crestByTeam.get(r.team) ?? null} size="xs" />
+                        <span className="nm">{r.team}</span>
+                      </div>
+                    </td>
+                    <td className="p">{r.points}</td>
+                    <td>{r.played}</td>
+                    <td>{r.won}</td>
+                    <td>{r.drawn}</td>
+                    <td>{r.lost}</td>
+                    <td>{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+
+        <div
+          className="gcard"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <p
+            className="legend"
+            style={{ flexDirection: "column", alignItems: "flex-start", gap: "10px" }}
+          >
+            <span>
+              <span
+                className="swatch"
+                style={{
+                  background:
+                    "color-mix(in srgb,var(--green) 50%,var(--paper-2))",
+                }}
+              />{" "}
+              1º e 2º classificam direto
+            </span>
+            <span>
+              <span
+                className="swatch"
+                style={{
+                  background:
+                    "color-mix(in srgb,var(--gold-foil) 70%,var(--paper-2))",
+                }}
+              />{" "}
+              os 8 melhores 3ºs avançam
+            </span>
+            <span style={{ color: "var(--ink-faint)" }}>
+              P pontos · J jogos · SG saldo
+            </span>
+          </p>
+        </div>
       </section>
 
-      {/* Mata-mata */}
       {stages.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">Mata-mata</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {stages.map((stage) => (
-              <div key={stage} className="flex w-56 shrink-0 flex-col gap-2">
-                <h3 className="text-sm font-semibold text-neutral-500">
-                  {stageLabel(stage)}
-                </h3>
-                {byStage.get(stage)!.map((m) => {
-                  const decided =
-                    m.homeScore !== null && m.awayScore !== null;
-                  const homeWin = decided && m.homeScore! > m.awayScore!;
-                  const awayWin = decided && m.awayScore! > m.homeScore!;
-                  return (
-                    <Link
-                      key={m.id}
-                      href={`/jogos/${m.id}`}
-                      className="flex flex-col gap-1 rounded-lg border border-black/10 bg-white p-2 text-sm transition hover:border-green-600/60 dark:border-white/10 dark:bg-neutral-900"
-                    >
-                      <BracketTeam
-                        name={m.homeTeam}
-                        crest={m.homeCrest}
-                        score={m.homeScore}
-                        bold={homeWin}
-                      />
-                      <BracketTeam
-                        name={m.awayTeam}
-                        crest={m.awayCrest}
-                        score={m.awayScore}
-                        bold={awayWin}
-                      />
-                      <span
-                        className={`text-[10px] ${
-                          isLive(m.status)
-                            ? "font-semibold text-red-600"
-                            : "text-neutral-400"
-                        }`}
-                      >
-                        {statusLabel(m.status)}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
+        <>
+          <div className="section-head">
+            <h2>
+              <span className="star">★</span> Mata-mata
+            </h2>
+            <span className="bar" />
+            <span className="daytag">Rumo ao título</span>
           </div>
-        </section>
+
+          <section className="bracket">
+            {stages.map((stage) => {
+              const isFinal = stage === "FINAL";
+              return (
+                <div className={`bk-col${isFinal ? " final" : ""}`} key={stage}>
+                  <h3>{stageLabel(stage)}</h3>
+                  {byStage.get(stage)!.map((m) => {
+                    const decided =
+                      m.homeScore !== null && m.awayScore !== null;
+                    const homeWin = decided && m.homeScore! > m.awayScore!;
+                    const awayWin = decided && m.awayScore! > m.homeScore!;
+                    return (
+                      <Link
+                        key={m.id}
+                        href={`/jogos/${m.id}`}
+                        className={`bk${isFinal && decided ? " champ" : ""}`}
+                      >
+                        <BracketRow
+                          name={m.homeTeam}
+                          crest={m.homeCrest}
+                          score={m.homeScore}
+                          outcome={homeWin ? "win" : awayWin ? "lose" : ""}
+                        />
+                        <div className="div" />
+                        <BracketRow
+                          name={m.awayTeam}
+                          crest={m.awayCrest}
+                          score={m.awayScore}
+                          outcome={awayWin ? "win" : homeWin ? "lose" : ""}
+                        />
+                        <span className={`st${isLive(m.status) ? " live" : ""}`}>
+                          {statusLabel(m.status)}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </section>
+        </>
       )}
-    </div>
+    </>
   );
 }

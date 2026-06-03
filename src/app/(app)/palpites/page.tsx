@@ -35,21 +35,38 @@ export default async function PalpitesPage() {
     });
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">Meus palpites</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Você pode editar até o início de cada jogo. Pontuação: 10 pontos pelo
-          placar exato, 5 por acertar quem ganha (ou empate).
+    <>
+      <header className="page-head">
+        <p className="kicker">★ Sua cartela de palpites</p>
+        <h1>
+          Meus <em>Palpites</em>
+        </h1>
+        <p className="sub">
+          Cravou o placar? Vale <b>10</b>. Acertou só o vencedor ou o empate?
+          Vale <b>5</b>. Você pode editar cada jogo <b>até o apito inicial</b>.
         </p>
+        <div className="page-rule" />
+      </header>
+
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Abertos para palpite
+        </h2>
+        <span className="bar" />
       </div>
+
       {open.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-black/15 p-8 text-center text-neutral-500 dark:border-white/15">
-          Nenhum jogo aberto para palpite no momento.
+        <div
+          className="alm-table-wrap"
+          style={{ padding: "32px", textAlign: "center" }}
+        >
+          <p className="legend" style={{ justifyContent: "center" }}>
+            Nenhum jogo aberto para palpite no momento.
+          </p>
         </div>
       ) : (
         <PredictionsEditor matches={open} />
       )}
-    </div>
+    </>
   );
 }

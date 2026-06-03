@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/session";
 import { dayKey } from "@/lib/format";
-import { LineChart, PALETTE, type Series } from "./LineChart";
+import { LineChart, PALETTE, ME_COLOR, type Series } from "./LineChart";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ function dayShort(key: string): string {
 }
 
 export default async function GraficosPage() {
+  const me = await getCurrentUser();
   const preds = await prisma.prediction.findMany({
     where: { points: { not: null } },
     include: {
@@ -21,13 +23,24 @@ export default async function GraficosPage() {
 
   if (preds.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Gráficos</h1>
-        <div className="rounded-xl border border-dashed border-black/15 p-8 text-center text-neutral-500 dark:border-white/15">
-          Os gráficos aparecem aqui assim que os primeiros jogos forem
-          encerrados. 📈
+      <>
+        <header className="page-head">
+          <p className="kicker">★ A corrida pelo título, dia a dia</p>
+          <h1>
+            Os <em>Gráficos</em>
+          </h1>
+          <div className="page-rule" />
+        </header>
+        <div
+          className="alm-table-wrap"
+          style={{ padding: "32px", textAlign: "center" }}
+        >
+          <p className="legend" style={{ justifyContent: "center" }}>
+            Os gráficos aparecem aqui assim que os primeiros jogos forem
+            encerrados. 📈
+          </p>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -80,81 +93,100 @@ export default async function GraficosPage() {
   const labels = days.map(dayShort);
   const evolution: Series[] = ordered.map((id, i) => ({
     name: nameById.get(id)!,
-    color: PALETTE[i % PALETTE.length],
+    color: me?.id === id ? ME_COLOR : PALETTE[i % PALETTE.length],
     values: cumByUser.get(id)!,
+    me: me?.id === id,
   }));
   const gap: Series[] = ordered.map((id, i) => ({
     name: nameById.get(id)!,
-    color: PALETTE[i % PALETTE.length],
+    color: me?.id === id ? ME_COLOR : PALETTE[i % PALETTE.length],
     values: gapByUser.get(id)!,
+    me: me?.id === id,
   }));
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">Gráficos</h1>
-
-      <section className="flex flex-col gap-2 rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-neutral-900">
-        <h2 className="text-lg font-semibold">Evolução do ranking</h2>
-        <p className="text-sm text-neutral-500">
-          Total de pontos acumulado por jogador ao longo dos dias.
+    <>
+      <header className="page-head">
+        <p className="kicker">★ A corrida pelo título, dia a dia</p>
+        <h1>
+          Os <em>Gráficos</em>
+        </h1>
+        <p className="sub">
+          Como cada jogador evoluiu ao longo do mundial — e o quão perto está do
+          líder.
         </p>
+        <div className="page-rule" />
+      </header>
+
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Evolução do ranking
+        </h2>
+        <span className="bar" />
+      </div>
+      <div className="chart-card">
+        <h3>Pontos acumulados</h3>
+        <p className="desc">Total de pontos por jogador ao longo dos dias.</p>
         <LineChart labels={labels} series={evolution} />
-      </section>
+      </div>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-neutral-900">
-        <h2 className="text-lg font-semibold">Diferença para o líder</h2>
-        <p className="text-sm text-neutral-500">
-          Quantos pontos cada um está atrás do líder (no topo = liderança).
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Diferença para o líder
+        </h2>
+        <span className="bar" />
+        <span className="daytag">Topo = liderança</span>
+      </div>
+      <div className="chart-card">
+        <h3>Distância do topo</h3>
+        <p className="desc">
+          Quantos pontos cada um está atrás do líder. Quanto mais alto, mais
+          perto do topo.
         </p>
-        <LineChart labels={labels} series={gap} invert unit="Menor = mais perto do topo." />
-      </section>
+        <LineChart
+          labels={labels}
+          series={gap}
+          invert
+          unit="Menor = mais perto do topo."
+        />
+      </div>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Pontos por rodada (dia)</h2>
-        <div className="overflow-x-auto rounded-xl border border-black/10 dark:border-white/10">
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-100 text-left text-neutral-500 dark:bg-neutral-800">
-              <tr>
-                <th className="px-3 py-2 whitespace-nowrap">Jogador</th>
-                {days.map((d) => (
-                  <th key={d} className="px-2 py-2 text-center whitespace-nowrap">
-                    {dayShort(d)}
-                  </th>
-                ))}
-                <th className="px-3 py-2 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordered.map((id) => (
-                <tr
-                  key={id}
-                  className="border-t border-black/5 dark:border-white/5"
-                >
-                  <td className="px-3 py-2 font-medium whitespace-nowrap">
-                    {nameById.get(id)}
-                  </td>
-                  {days.map((d) => {
-                    const pts = perDay.get(d)!.get(id) ?? 0;
-                    return (
-                      <td
-                        key={d}
-                        className={`px-2 py-2 text-center tabular-nums ${
-                          pts === 0 ? "text-neutral-300 dark:text-neutral-600" : ""
-                        }`}
-                      >
-                        {pts}
-                      </td>
-                    );
-                  })}
-                  <td className="px-3 py-2 text-right font-bold tabular-nums">
-                    {cumByUser.get(id)!.at(-1)}
-                  </td>
-                </tr>
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Pontos por rodada
+        </h2>
+        <span className="bar" />
+        <span className="daytag">Por dia</span>
+      </div>
+      <div className="day-table-wrap">
+        <table className="day-table">
+          <thead>
+            <tr>
+              <th className="l">Jogador</th>
+              {days.map((d) => (
+                <th key={d}>{dayShort(d)}</th>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+              <th className="r">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordered.map((id) => (
+              <tr key={id} className={me?.id === id ? "me" : ""}>
+                <td className="l">{nameById.get(id)}</td>
+                {days.map((d) => {
+                  const pts = perDay.get(d)!.get(id) ?? 0;
+                  return (
+                    <td key={d} className={pts === 0 ? "zero" : ""}>
+                      {pts}
+                    </td>
+                  );
+                })}
+                <td className="tot">{cumByUser.get(id)!.at(-1)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

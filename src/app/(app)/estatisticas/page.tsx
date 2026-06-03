@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/session";
 import { stageLabel, stageRank } from "@/lib/football/types";
 
 export const dynamic = "force-dynamic";
@@ -21,25 +22,44 @@ function StatCard({
   emoji,
   title,
   value,
-  subtitle,
+  unit,
+  who,
+  corner,
+  variant = "hot",
 }: {
   emoji: string;
   title: string;
   value: string;
-  subtitle?: string;
+  unit?: string;
+  who?: string;
+  corner: string;
+  variant?: "hot" | "cold";
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-neutral-900">
-      <span className="text-sm text-neutral-500">
-        {emoji} {title}
-      </span>
-      <span className="text-lg font-bold">{value}</span>
-      {subtitle && <span className="text-xs text-neutral-400">{subtitle}</span>}
+    <div className={`statcard ${variant}`}>
+      <div className="badge">{emoji}</div>
+      <div>
+        <p className="st-label">{title}</p>
+        <p className="st-value">
+          {value}
+          {unit && <small> {unit}</small>}
+        </p>
+        {who && (
+          <p
+            className="st-who"
+            style={variant === "cold" ? { color: "var(--red)" } : undefined}
+          >
+            {who}
+          </p>
+        )}
+      </div>
+      <span className="corner">{corner}</span>
     </div>
   );
 }
 
 export default async function EstatisticasPage() {
+  const me = await getCurrentUser();
   const preds = await prisma.prediction.findMany({
     where: { points: { not: null } },
     include: {
@@ -51,13 +71,24 @@ export default async function EstatisticasPage() {
 
   if (preds.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Estatísticas</h1>
-        <div className="rounded-xl border border-dashed border-black/15 p-8 text-center text-neutral-500 dark:border-white/15">
-          As estatísticas aparecem aqui assim que os primeiros jogos forem
-          encerrados. 🍿
+      <>
+        <header className="page-head">
+          <p className="kicker">★ Os recordes do bolão</p>
+          <h1>
+            As <em>Estatísticas</em>
+          </h1>
+          <div className="page-rule" />
+        </header>
+        <div
+          className="alm-table-wrap"
+          style={{ padding: "32px", textAlign: "center" }}
+        >
+          <p className="legend" style={{ justifyContent: "center" }}>
+            As estatísticas aparecem aqui assim que os primeiros jogos forem
+            encerrados. 🍿
+          </p>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -138,45 +169,74 @@ export default async function EstatisticasPage() {
   );
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">Estatísticas</h1>
+    <>
+      <header className="page-head">
+        <p className="kicker">★ Os recordes do bolão</p>
+        <h1>
+          As <em>Estatísticas</em>
+        </h1>
+        <p className="sub">
+          Quem está quente, quem está gelado, e quem manda em cada fase do
+          mundial. <b>Acerto</b> = palpite que pontuou · <b>Erro</b> = palpite
+          que zerou.
+        </p>
+        <div className="page-rule" />
+      </header>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <section className="stat-grid">
         <StatCard
           emoji="🔥"
+          variant="hot"
+          corner="EM ALTA"
           title="Maior sequência de acertos"
-          value={bestHit.value > 0 ? `${bestHit.value} seguidos` : "—"}
-          subtitle={bestHit.value > 0 ? fmtNames(bestHit.names) : undefined}
+          value={bestHit.value > 0 ? String(bestHit.value) : "—"}
+          unit={bestHit.value > 0 ? "seguidos" : undefined}
+          who={bestHit.value > 0 ? fmtNames(bestHit.names) : undefined}
         />
         <StatCard
           emoji="🧊"
+          variant="cold"
+          corner="GELADO"
           title="Maior sequência de erros"
-          value={bestMiss.value > 0 ? `${bestMiss.value} seguidos` : "—"}
-          subtitle={bestMiss.value > 0 ? fmtNames(bestMiss.names) : undefined}
+          value={bestMiss.value > 0 ? String(bestMiss.value) : "—"}
+          unit={bestMiss.value > 0 ? "seguidos" : undefined}
+          who={bestMiss.value > 0 ? fmtNames(bestMiss.names) : undefined}
         />
         <StatCard
           emoji="🎯"
+          variant="hot"
+          corner="PONTARIA"
           title="Mais placares cravados"
-          value={mostExact.value > 0 ? `${mostExact.value} placares` : "—"}
-          subtitle={mostExact.value > 0 ? fmtNames(mostExact.names) : undefined}
+          value={mostExact.value > 0 ? String(mostExact.value) : "—"}
+          unit={mostExact.value > 0 ? "placares" : undefined}
+          who={mostExact.value > 0 ? fmtNames(mostExact.names) : undefined}
         />
         <StatCard
           emoji="🥶"
-          title="Pé frio (menor aproveitamento)"
-          value={peFrio ? `${Math.round(peFrio.rate * 100)}%` : "—"}
-          subtitle={
-            peFrio
-              ? peFrio.name
-              : `aparece com ${MIN_PE_FRIO}+ palpites encerrados`
+          variant="cold"
+          corner="AZAR"
+          title="Pé frio · menor aproveitamento"
+          value={peFrio ? `${Math.round(peFrio.rate * 100)}` : "—"}
+          unit={peFrio ? "%" : undefined}
+          who={
+            peFrio ? peFrio.name : `exige ${MIN_PE_FRIO}+ palpites encerrados`
           }
         />
+      </section>
+
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Ranking por fase
+        </h2>
+        <span className="bar" />
+        <span className="daytag">Pontos na fase</span>
       </div>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Ranking por fase</h2>
+      <section className="fase-grid">
         {stagesPresent.map((stage) => {
           const ranking = [...byStage.get(stage)!.entries()]
             .map(([userId, points]) => ({
+              userId,
               username: byUser.get(userId)!.username,
               points,
             }))
@@ -186,41 +246,29 @@ export default async function EstatisticasPage() {
                 a.username.localeCompare(b.username, "pt-BR"),
             );
           return (
-            <div key={stage} className="flex flex-col gap-1">
-              <h3 className="text-sm font-semibold text-neutral-500">
-                {stageLabel(stage)}
+            <div className="fasecard" key={stage}>
+              <h3>
+                <span>{stageLabel(stage)}</span>
+                <span className="ph">{ranking.length} jogadores</span>
               </h3>
-              <div className="overflow-hidden rounded-xl border border-black/10 dark:border-white/10">
-                <table className="w-full text-sm">
-                  <tbody>
-                    {ranking.map((r, i) => (
-                      <tr
-                        key={r.username}
-                        className="border-t border-black/5 first:border-t-0 dark:border-white/5"
-                      >
-                        <td className="px-3 py-1.5 w-8 font-semibold text-neutral-500">
-                          {i + 1}
-                        </td>
-                        <td className="px-3 py-1.5 font-medium">
-                          {r.username}
-                        </td>
-                        <td className="px-3 py-1.5 text-right font-bold tabular-nums">
-                          {r.points}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <table className="fasetable">
+                <tbody>
+                  {ranking.map((r, i) => (
+                    <tr
+                      key={r.userId}
+                      className={me?.id === r.userId ? "me" : ""}
+                    >
+                      <td className="pos">{i + 1}</td>
+                      <td className="nm">{r.username}</td>
+                      <td className="pt">{r.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           );
         })}
       </section>
-
-      <p className="text-xs text-neutral-400">
-        &ldquo;Acerto&rdquo; = palpite que pontuou (cravou o placar ou acertou o
-        vencedor). &ldquo;Erro&rdquo; = palpite que zerou.
-      </p>
-    </div>
+    </>
   );
 }

@@ -46,7 +46,13 @@ export default async function AdminPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">Admin</h1>
+      <header className="page-head">
+        <p className="kicker">★ Bastidores do bolão</p>
+        <h1>
+          O <em>Admin</em>
+        </h1>
+        <div className="page-rule" />
+      </header>
       <AdminPanel
         users={list}
         myId={me.id}

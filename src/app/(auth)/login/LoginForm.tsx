@@ -41,13 +41,18 @@ export default function LoginForm() {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         placeholder="seu nome de usuário"
-        className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
+        className="field"
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p style={{ color: "var(--red)", fontFamily: "var(--ff-mono)", fontSize: 12 }}>
+          {error}
+        </p>
+      )}
       <button
         type="submit"
         disabled={loading || !username.trim()}
-        className="rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition hover:bg-green-700 disabled:opacity-50"
+        className="btn"
+        style={{ width: "100%" }}
       >
         {loading ? "Entrando..." : "Entrar"}
       </button>

@@ -10,11 +10,8 @@ export default function LogoutButton() {
     router.refresh();
   }
   return (
-    <button
-      onClick={logout}
-      className="text-neutral-500 underline-offset-2 hover:text-red-600 hover:underline"
-    >
-      sair
+    <button type="button" onClick={logout} className="logout">
+      Sair
     </button>
   );
 }

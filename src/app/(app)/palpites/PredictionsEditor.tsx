@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatDay, formatTime } from "@/lib/format";
 import { groupLabel, stageLabel } from "@/lib/football/types";
+import { Crest } from "@/components/Crest";
 
 export interface EditableMatch {
   matchId: number;
@@ -18,15 +19,6 @@ export interface EditableMatch {
 }
 
 type Scores = Record<number, { home: string; away: string }>;
-
-function Crest({ src }: { src: string | null }) {
-  if (!src)
-    return (
-      <span className="inline-block h-5 w-5 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-    );
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className="h-5 w-5 shrink-0 object-contain" />;
-}
 
 export default function PredictionsEditor({
   matches,
@@ -57,6 +49,11 @@ export default function PredictionsEditor({
     }
     return map;
   }, [matches]);
+
+  const filledCount = matches.filter((m) => {
+    const cur = scores[m.matchId];
+    return cur.home !== "" && cur.away !== "";
+  }).length;
 
   function setScore(matchId: number, side: "home" | "away", value: string) {
     const clean = value.replace(/[^0-9]/g, "").slice(0, 2);
@@ -108,58 +105,74 @@ export default function PredictionsEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <ul className="flex flex-col gap-2">
-        {matches.map((m) => (
-          <li
-            key={m.matchId}
-            className="rounded-xl border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-neutral-900"
-          >
-            <div className="mb-2 text-xs text-neutral-500">
-              {stageLabel(m.stage)}
-              {m.group ? ` · ${groupLabel(m.group)}` : ""} ·{" "}
-              {formatDay(new Date(m.kickoff))} às {formatTime(new Date(m.kickoff))}
+    <div>
+      {matches.map((m) => {
+        const kickoff = new Date(m.kickoff);
+        return (
+          <div className="pcard" key={m.matchId}>
+            <div className="pc-top">
+              <span className="pc-meta">
+                {stageLabel(m.stage)}
+                {m.group ? ` · ${groupLabel(m.group)}` : ""} ·{" "}
+                <b>{formatTime(kickoff)}</b> · {formatDay(kickoff)}
+              </span>
+              <span className="pill open">Aberto</span>
             </div>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <div className="flex min-w-0 items-center justify-end gap-2">
-                <span className="truncate font-medium">{m.homeTeam}</span>
-                <Crest src={m.homeCrest} />
+            <div className="pc-body">
+              <div className="pteam right">
+                <div>
+                  <div className="nm">{m.homeTeam}</div>
+                </div>
+                <Crest src={m.homeCrest} size="sm" />
               </div>
-              <div className="flex items-center gap-1">
+              <div className="score-in">
                 <input
+                  className="sc-in"
                   inputMode="numeric"
+                  maxLength={2}
                   value={scores[m.matchId].home}
                   onChange={(e) => setScore(m.matchId, "home", e.target.value)}
-                  className="h-10 w-12 rounded-lg border border-black/15 bg-transparent text-center text-lg outline-none focus:border-green-600 dark:border-white/20"
-                  placeholder="-"
+                  placeholder="–"
+                  aria-label={`Gols ${m.homeTeam}`}
                 />
-                <span className="text-neutral-400">×</span>
+                <span className="x">×</span>
                 <input
+                  className="sc-in"
                   inputMode="numeric"
+                  maxLength={2}
                   value={scores[m.matchId].away}
                   onChange={(e) => setScore(m.matchId, "away", e.target.value)}
-                  className="h-10 w-12 rounded-lg border border-black/15 bg-transparent text-center text-lg outline-none focus:border-green-600 dark:border-white/20"
-                  placeholder="-"
+                  placeholder="–"
+                  aria-label={`Gols ${m.awayTeam}`}
                 />
               </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <Crest src={m.awayCrest} />
-                <span className="truncate font-medium">{m.awayTeam}</span>
+              <div className="pteam">
+                <Crest src={m.awayCrest} size="sm" />
+                <div>
+                  <div className="nm">{m.awayTeam}</div>
+                </div>
               </div>
             </div>
-          </li>
-        ))}
-      </ul>
+          </div>
+        );
+      })}
 
-      {message && <p className="text-sm text-green-600">{message}</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {message && (
+        <p style={{ color: "var(--green)", fontFamily: "var(--ff-mono)", fontSize: 12 }}>
+          {message}
+        </p>
+      )}
+      {error && (
+        <p style={{ color: "var(--red)", fontFamily: "var(--ff-mono)", fontSize: 12 }}>
+          {error}
+        </p>
+      )}
 
-      <div className="sticky bottom-4 flex justify-end">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg bg-green-600 px-6 py-2 font-medium text-white shadow-lg transition hover:bg-green-700 disabled:opacity-50"
-        >
+      <div className="savebar">
+        <span className="info">
+          <b>{filledCount}</b> de {matches.length} palpite(s) preenchido(s)
+        </span>
+        <button className="btn gold" onClick={save} disabled={saving}>
           {saving ? "Salvando..." : "Salvar palpites"}
         </button>
       </div>

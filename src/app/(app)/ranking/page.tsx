@@ -42,52 +42,98 @@ export default async function RankingPage() {
     .map((u) => ({ user: u, ...stats.get(u.id)! }))
     .sort((a, b) => b.total - a.total || b.exact - a.exact);
 
+  const [first, second, third] = rows;
+  const podium: { row: (typeof rows)[number]; place: 1 | 2 | 3 }[] = [];
+  if (second) podium.push({ row: second, place: 2 });
+  if (first) podium.push({ row: first, place: 1 });
+  if (third) podium.push({ row: third, place: 3 });
+  const placeClass = { 1: "first", 2: "second", 3: "third" } as const;
+  const ribLabel = { 1: "★ Líder ★", 2: "Vice-líder", 3: "3º lugar" } as const;
+
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Ranking</h1>
-      <div className="overflow-hidden rounded-xl border border-black/10 dark:border-white/10">
-        <table className="w-full text-sm">
-          <thead className="bg-neutral-100 text-left text-neutral-500 dark:bg-neutral-800">
+    <>
+      <header className="page-head">
+        <p className="kicker">★ Classificação geral do bolão</p>
+        <h1>
+          O <em>Ranking</em>
+        </h1>
+        <p className="sub">
+          Os melhores palpiteiros do mundial. Placar exato vale <b>10</b>,
+          acertar o vencedor vale <b>5</b>, e os palpites da Copa pagam{" "}
+          <b>bônus</b>.
+        </p>
+        <div className="page-rule" />
+      </header>
+
+      {podium.length > 0 && (
+        <section className="podium">
+          {podium.map(({ row, place }) => (
+            <div className={`pod ${placeClass[place]}`} key={row.user.id}>
+              <span className="rib">{ribLabel[place]}</span>
+              <div className="pmedal">{place}</div>
+              <div className="pname">{row.user.username}</div>
+              <div className="ppts">{row.total} PTS</div>
+              <div className="pmeta">
+                <b>{row.exact}</b> exatos · <b>{row.partial}</b> parciais
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <div className="section-head">
+        <h2>
+          <span className="star">★</span> Tabela completa
+        </h2>
+        <span className="bar" />
+        <span className="daytag">{rows.length} jogadores</span>
+      </div>
+
+      <div className="alm-table-wrap">
+        <table className="alm-table">
+          <thead>
             <tr>
-              <th className="px-3 py-2 w-10">#</th>
-              <th className="px-3 py-2">Jogador</th>
-              <th className="px-3 py-2 text-center">Exatos</th>
-              <th className="px-3 py-2 text-center">Parciais</th>
-              <th className="px-3 py-2 text-center">Bônus</th>
-              <th className="px-3 py-2 text-right">Pontos</th>
+              <th>#</th>
+              <th className="l">Jogador</th>
+              <th>Exatos</th>
+              <th>Parciais</th>
+              <th>Bônus</th>
+              <th className="r">Pontos</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr
-                key={r.user.id}
-                className={`border-t border-black/5 dark:border-white/5 ${
-                  me?.id === r.user.id ? "bg-green-50 dark:bg-green-950/30" : ""
-                }`}
-              >
-                <td className="px-3 py-2 font-semibold text-neutral-500">
-                  {i + 1}
+              <tr key={r.user.id} className={me?.id === r.user.id ? "me" : ""}>
+                <td>
+                  <span className={`rank-pos${i < 3 ? " top" : ""}`}>
+                    {i + 1}
+                  </span>
                 </td>
-                <td className="px-3 py-2 font-medium">{r.user.username}</td>
-                <td className="px-3 py-2 text-center tabular-nums">{r.exact}</td>
-                <td className="px-3 py-2 text-center tabular-nums">
-                  {r.partial}
+                <td className="l">
+                  <span className="name">{r.user.username}</span>
+                  {me?.id === r.user.id && (
+                    <span
+                      className="num"
+                      style={{ color: "var(--ink-faint)", fontSize: 10 }}
+                    >
+                      {" "}
+                      você
+                    </span>
+                  )}
                 </td>
-                <td className="px-3 py-2 text-center tabular-nums text-amber-600 dark:text-amber-400">
+                <td className="num">{r.exact}</td>
+                <td className="num">{r.partial}</td>
+                <td className="num" style={{ color: "var(--gold)" }}>
                   {r.bonus || "—"}
                 </td>
-                <td className="px-3 py-2 text-right text-lg font-bold tabular-nums">
-                  {r.total}
+                <td className="r">
+                  <span className="pts">{r.total}</span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-neutral-400">
-        10 pontos por placar exato · 5 por acertar o vencedor/empate · Bônus =
-        palpites da Copa (Campeão, Vice, etc.).
-      </p>
-    </div>
+    </>
   );
 }

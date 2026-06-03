@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
+import NavLinks from "@/components/NavLinks";
+import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "./LogoutButton";
 
 export const dynamic = "force-dynamic";
@@ -13,46 +15,46 @@ export default async function AppLayout({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const initials = user.username.slice(0, 2).toUpperCase();
+
   return (
     <div className="flex min-h-full flex-col">
-      <header className="border-b border-black/10 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-neutral-900/80">
-        <nav className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm">
-          <Link href="/" className="font-bold">
-            ⚽ Bolão 2026
+      <div className="topbar">
+        <div className="topbar-inner">
+          <Link className="brand" href="/">
+            <span className="ball" />
+            <span className="brand-name">
+              Bolão <b>2026</b>
+            </span>
           </Link>
-          <Link href="/" className="hover:text-green-600">
-            Jogos
-          </Link>
-          <Link href="/classificacao" className="hover:text-green-600">
-            Classificação
-          </Link>
-          <Link href="/palpites" className="hover:text-green-600">
-            Meus palpites
-          </Link>
-          <Link href="/torneio" className="hover:text-green-600">
-            Copa
-          </Link>
-          <Link href="/ranking" className="hover:text-green-600">
-            Ranking
-          </Link>
-          <Link href="/estatisticas" className="hover:text-green-600">
-            Stats
-          </Link>
-          <Link href="/graficos" className="hover:text-green-600">
-            Gráficos
-          </Link>
-          {user.isAdmin && (
-            <Link href="/admin" className="hover:text-green-600">
-              Admin
-            </Link>
-          )}
-          <span className="ml-auto text-neutral-500">{user.username}</span>
-          <LogoutButton />
-        </nav>
-      </header>
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
-        {children}
-      </main>
+          <NavLinks isAdmin={user.isAdmin} />
+          <div className="nav-right">
+            <span className="user-chip">
+              <span className="user-num">{initials}</span>
+              {user.username}
+            </span>
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
+        </div>
+      </div>
+
+      <main className="wrap flex-1 pb-10">{children}</main>
+
+      <footer className="wrap">
+        <div className="almanac-foot">
+          <div className="legend">
+            <span>
+              <b>10 pts</b> placar exato
+            </span>
+            <span>
+              <b>5 pts</b> vencedor / empate
+            </span>
+            <span className="g">★ Bônus</span> <span>palpites da Copa</span>
+          </div>
+          <div className="mark">Bolão da Copa · MMXXVI</div>
+        </div>
+      </footer>
     </div>
   );
 }

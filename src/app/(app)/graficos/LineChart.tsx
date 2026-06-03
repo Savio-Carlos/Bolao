@@ -1,9 +1,11 @@
 // Gráfico de linhas multi-série em SVG puro (renderizado no servidor, sem libs).
+// As cores das séries usam variáveis CSS (--chart-*), então se adaptam ao tema.
 
 export interface Series {
   name: string;
   color: string;
   values: number[]; // alinhado com `labels`
+  me?: boolean; // linha do usuário ("você"): mais grossa
 }
 
 export function LineChart({
@@ -31,9 +33,7 @@ export function LineChart({
 
   const x = (i: number) => (n <= 1 ? padL : padL + (i * plotW) / (n - 1));
   const y = (v: number) =>
-    invert
-      ? padT + (v / maxY) * plotH
-      : padT + (1 - v / maxY) * plotH;
+    invert ? padT + (v / maxY) * plotH : padT + (1 - v / maxY) * plotH;
 
   // Linhas de grade horizontais (5 níveis).
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxY * f));
@@ -43,9 +43,22 @@ export function LineChart({
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="legend-line">
+        {series.map((s) => (
+          <span key={s.name} className="li">
+            <span
+              className={`sw${s.me ? " me-sw" : ""}`}
+              style={{ background: s.color }}
+            />
+            {s.name}
+            {s.me ? " (você)" : ""}
+          </span>
+        ))}
+      </div>
+
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="h-auto w-full"
+        className="chart"
         role="img"
         preserveAspectRatio="xMidYMid meet"
       >
@@ -64,7 +77,7 @@ export function LineChart({
               x={padL - 4}
               y={y(t) + 3}
               textAnchor="end"
-              className="fill-neutral-400 text-[9px]"
+              className="fill-ink-faint text-[9px]"
             >
               {t}
             </text>
@@ -79,62 +92,66 @@ export function LineChart({
               x={x(i)}
               y={H - 8}
               textAnchor="middle"
-              className="fill-neutral-400 text-[9px]"
+              className="fill-ink-faint text-[9px]"
             >
               {lab}
             </text>
           ) : null,
         )}
 
-        {/* séries */}
-        {series.map((s) => (
-          <g key={s.name}>
-            {n > 1 && (
-              <polyline
-                fill="none"
-                stroke={s.color}
-                strokeWidth={2}
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                points={s.values.map((v, i) => `${x(i)},${y(v)}`).join(" ")}
-              />
-            )}
-            {s.values.map((v, i) => (
-              <circle key={i} cx={x(i)} cy={y(v)} r={n > 30 ? 1.5 : 2.5} fill={s.color} />
-            ))}
-          </g>
-        ))}
+        {/* séries (a do usuário por último, para ficar por cima) */}
+        {[...series]
+          .sort((a, b) => Number(a.me) - Number(b.me))
+          .map((s) => (
+            <g key={s.name}>
+              {n > 1 && (
+                <polyline
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth={s.me ? 3.5 : 2}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  opacity={s.me ? 1 : 0.92}
+                  points={s.values.map((v, i) => `${x(i)},${y(v)}`).join(" ")}
+                />
+              )}
+              {s.values.map((v, i) => (
+                <circle
+                  key={i}
+                  cx={x(i)}
+                  cy={y(v)}
+                  r={s.me ? 4 : n > 30 ? 1.5 : 2.5}
+                  fill={s.color}
+                />
+              ))}
+            </g>
+          ))}
       </svg>
 
-      {/* legenda */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-        {series.map((s) => (
-          <span key={s.name} className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: s.color }}
-            />
-            {s.name}
-          </span>
-        ))}
-      </div>
-      {unit && <span className="text-xs text-neutral-400">{unit}</span>}
+      {unit && (
+        <span className="text-xs" style={{ color: "var(--ink-faint)" }}>
+          {unit}
+        </span>
+      )}
     </div>
   );
 }
 
-// Paleta para diferenciar os jogadores.
+// Paleta para diferenciar os jogadores (variáveis CSS, adaptáveis ao tema).
 export const PALETTE = [
-  "#16a34a",
-  "#2563eb",
-  "#dc2626",
-  "#d97706",
-  "#7c3aed",
-  "#0891b2",
-  "#db2777",
-  "#65a30d",
-  "#ea580c",
-  "#0d9488",
-  "#9333ea",
-  "#475569",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--chart-6)",
+  "var(--chart-7)",
+  "var(--chart-8)",
+  "var(--chart-9)",
+  "var(--chart-10)",
+  "var(--chart-11)",
+  "var(--chart-12)",
 ];
+
+// Cor dedicada à linha do usuário ("você").
+export const ME_COLOR = "var(--chart-me)";

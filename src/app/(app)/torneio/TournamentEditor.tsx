@@ -50,7 +50,7 @@ export default function TournamentEditor({
     });
     const data = await res.json();
     if (res.ok) {
-      setMsg("Palpites salvos! ✅");
+      setMsg("Cartela salva! ✅");
       router.refresh();
     } else {
       setErr(data.error ?? "Erro ao salvar.");
@@ -58,23 +58,41 @@ export default function TournamentEditor({
     setSaving(false);
   }
 
+  const byKey = (k: CategoryMeta["key"]) => categories.find((c) => c.key === k);
+  const champion = byKey("champion");
+  const gridCats = categories.filter((c) => c.key !== "champion");
+  const jersey: Partial<Record<CategoryMeta["key"], string>> = {
+    topScorer: "9",
+    bestPlayer: "10",
+  };
+
   if (!open) {
     return (
-      <div className="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-neutral-900">
-        <p className="mb-3 text-sm text-neutral-500">
-          🔒 Os palpites do torneio estão fechados — a Copa já começou. Estes
-          são os seus:
-        </p>
-        <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="pcard locked">
+        <div className="pc-top">
+          <span className="pc-meta">
+            🔒 Os palpites do torneio estão fechados — a Copa já começou
+          </span>
+          <span className="pill closed">Encerrado</span>
+        </div>
+        <div className="bonus-grid">
           {categories.map((c) => (
-            <div key={c.key} className="flex justify-between gap-2">
-              <dt className="text-neutral-500">{c.label}</dt>
-              <dd className="font-medium">{initial[c.key] || "—"}</dd>
+            <div className="bcard" key={c.key}>
+              <div className="label">
+                <span>{c.label}</span>
+                <span className="bpts">+{c.points}</span>
+              </div>
+              <span style={{ fontFamily: "var(--ff-serif)", fontSize: 21 }}>
+                {initial[c.key] || "—"}
+              </span>
             </div>
           ))}
-          <div className="flex justify-between gap-2">
-            <dt className="text-neutral-500">Maior zebra</dt>
-            <dd className="font-medium">
+          <div className="bcard">
+            <div className="label">
+              <span>Maior zebra</span>
+              <span className="bpts">+{UPSET.totalPoints}</span>
+            </div>
+            <span style={{ fontFamily: "var(--ff-serif)", fontSize: 21 }}>
               {initial.upsetTeam
                 ? `${initial.upsetTeam}${
                     initial.upsetStage
@@ -82,90 +100,148 @@ export default function TournamentEditor({
                       : ""
                   }`
                 : "—"}
-            </dd>
+            </span>
           </div>
-        </dl>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div>
+      <div className="deadline">
+        <span className="dot" /> A cartela fecha <b>no apito do primeiro jogo</b>{" "}
+        — depois, é torcer.
+      </div>
+
       <datalist id="teams-list">
         {teams.map((t) => (
           <option key={t} value={t} />
         ))}
       </datalist>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {categories.map((c) => (
-          <label key={c.key} className="flex flex-col gap-1">
-            <span className="text-sm text-neutral-500">
-              {c.label}{" "}
-              <span className="text-xs text-neutral-400">({c.points} pts)</span>
-            </span>
-            <input
-              type="text"
-              value={values[c.key]}
-              onChange={(e) => set(c.key, e.target.value)}
-              list={c.type === "team" ? "teams-list" : undefined}
-              placeholder={
-                c.type === "team" ? "escolha a seleção" : "digite o nome"
-              }
-              className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
-            />
-          </label>
-        ))}
-      </div>
 
-      {/* Maior zebra: seleção + fase em que ela é eliminada */}
-      <div className="rounded-xl border border-black/10 p-3 dark:border-white/10">
-        <p className="mb-2 text-sm text-neutral-500">
-          Maior zebra{" "}
-          <span className="text-xs text-neutral-400">
-            ({UPSET.teamPoints} pts pela seleção + {UPSET.stagePoints} pts pela
-            fase — a fase só conta se a seleção estiver certa)
+      {/* CAMPEÃO (hero) */}
+      {champion && (
+        <div className="bonus-hero">
+          <div className="trophy">🏆</div>
+          <div className="bh-mid">
+            <p className="label">Campeão do mundo</p>
+            <div className="pick-row">
+              <div className="sel-wrap">
+                <input
+                  className="sel"
+                  list="teams-list"
+                  value={values.champion}
+                  onChange={(e) => set("champion", e.target.value)}
+                  placeholder="escolha a seleção"
+                />
+              </div>
+            </div>
+          </div>
+          <span className="bpts">+{champion.points} pts</span>
+        </div>
+      )}
+
+      <div className="bonus-grid">
+        {gridCats.map((c) => (
+          <div className="bcard" key={c.key}>
+            <div className="label">
+              <span>{c.label}</span>
+              <span className="bpts">+{c.points}</span>
+            </div>
+            <div className="pick-row">
+              {jersey[c.key] && (
+                <span
+                  className="jersey"
+                  style={
+                    c.key === "bestPlayer"
+                      ? { background: "var(--gold)", color: "var(--green-deep)" }
+                      : undefined
+                  }
+                >
+                  {jersey[c.key]}
+                </span>
+              )}
+              <div
+                className={`sel-wrap${c.type === "team" ? "" : " plain"}`}
+              >
+                <input
+                  className="sel sm"
+                  list={c.type === "team" ? "teams-list" : undefined}
+                  value={values[c.key]}
+                  onChange={(e) => set(c.key, e.target.value)}
+                  placeholder={
+                    c.type === "team" ? "escolha a seleção" : "digite o nome"
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* MAIOR ZEBRA */}
+        <div className="bcard">
+          <div className="label">
+            <span>Maior zebra</span>
+            <span className="bpts">+{UPSET.totalPoints}</span>
+          </div>
+          <div className="zebra-row">
+            <div className="sel-wrap">
+              <input
+                className="sel sm"
+                list="teams-list"
+                value={values.upsetTeam}
+                onChange={(e) => set("upsetTeam", e.target.value)}
+                placeholder="seleção"
+              />
+            </div>
+            <div className="sel-wrap">
+              <select
+                className="sel sm"
+                value={values.upsetStage}
+                onChange={(e) => set("upsetStage", e.target.value)}
+              >
+                <option value="">para em…</option>
+                {UPSET_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--ff-mono)",
+              fontSize: 10,
+              color: "var(--ink-faint)",
+            }}
+          >
+            {UPSET.teamPoints} pts pela seleção + {UPSET.stagePoints} pela fase
+            (só conta se a seleção estiver certa).
           </span>
-        </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-neutral-500">Seleção</span>
-            <input
-              type="text"
-              value={values.upsetTeam}
-              onChange={(e) => set("upsetTeam", e.target.value)}
-              list="teams-list"
-              placeholder="escolha a seleção"
-              className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-neutral-500">Para em qual fase</span>
-            <select
-              value={values.upsetStage}
-              onChange={(e) => set("upsetStage", e.target.value)}
-              className="rounded-lg border border-black/15 bg-transparent px-3 py-2 outline-none focus:border-green-600 dark:border-white/20"
-            >
-              <option value="">—</option>
-              {UPSET_STAGES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
       </div>
 
-      {msg && <p className="text-sm text-green-600">{msg}</p>}
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      {msg && (
+        <p style={{ color: "var(--green)", fontFamily: "var(--ff-mono)", fontSize: 12, marginTop: 12 }}>
+          {msg}
+        </p>
+      )}
+      {err && (
+        <p style={{ color: "var(--red)", fontFamily: "var(--ff-mono)", fontSize: 12, marginTop: 12 }}>
+          {err}
+        </p>
+      )}
 
-      <div className="flex justify-end">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg bg-green-600 px-6 py-2 font-medium text-white transition hover:bg-green-700 disabled:opacity-50"
-        >
-          {saving ? "Salvando..." : "Salvar palpites da Copa"}
+      <div className="savebar" style={{ position: "static", marginTop: 16 }}>
+        <span className="info">
+          Sua cartela: <b>{values.champion || "—"}</b> campeão,{" "}
+          <b>{values.runnerUp || "—"}</b> vice · zebra{" "}
+          <b>{values.upsetTeam || "—"}</b>
+        </span>
+        <button className="btn gold" onClick={save} disabled={saving}>
+          {saving ? "Salvando..." : "Salvar cartela"}
         </button>
       </div>
     </div>

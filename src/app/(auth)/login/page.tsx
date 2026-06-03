@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import LoginForm from "./LoginForm";
@@ -10,9 +11,33 @@ export default async function LoginPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-black/10 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-neutral-900">
-        <h1 className="text-2xl font-bold">⚽ Bolão da Copa 2026</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+      <div
+        className="pcard"
+        style={{ width: "100%", maxWidth: 380, padding: "26px 26px 28px" }}
+      >
+        <Link
+          className="brand"
+          href="/"
+          style={{ justifyContent: "center", marginBottom: 14 }}
+        >
+          <span className="ball" />
+          <span className="brand-name">
+            Bolão <b>2026</b>
+          </span>
+        </Link>
+        <p className="kicker" style={{ color: "var(--green)", fontSize: 11, fontWeight: 700 }}>
+          ★ Almanaque do Mundial
+        </p>
+        <h1
+          className="serif"
+          style={{ fontSize: 32, lineHeight: 1, margin: "4px 0 6px" }}
+        >
+          Bolão da <em style={{ color: "var(--green)" }}>Copa</em>
+        </h1>
+        <p
+          className="mono"
+          style={{ fontSize: 12, color: "var(--ink-soft)", margin: 0 }}
+        >
           Entre com seu nome de usuário para palpitar.
         </p>
         <LoginForm />
