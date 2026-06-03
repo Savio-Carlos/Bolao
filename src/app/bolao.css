@@ -264,10 +264,42 @@ a { color: inherit; text-decoration: none; }
   .seal { width: 64px; height: 64px; -webkit-mask: radial-gradient(circle, transparent 26px, #000 27px); mask: radial-gradient(circle, transparent 26px, #000 27px); }
   .seal::after { -webkit-mask: radial-gradient(circle, transparent 26px, #000 27px); mask: radial-gradient(circle, transparent 26px, #000 27px); }
   .seal-core { inset: 7px; }
-  .nav { display: none; }
   .feat-body { gap: 8px; }
   .team .tname { font-size: 20px; }
   .scorebox .sc { font-size: 38px; }
+
+  /* topbar: marca + usuário na 1ª linha; navegação rolável na 2ª */
+  .topbar-inner { flex-wrap: wrap; gap: 10px; padding: 9px 16px; }
+  .brand { margin-right: 0; }
+  .nav {
+    order: 1;
+    flex-basis: 100%;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 2px;
+    padding-bottom: 2px;
+    margin: 2px -16px -2px;
+    padding-left: 16px;
+    padding-right: 16px;
+    scrollbar-width: none;
+    border-top: 1px solid var(--line-soft);
+    padding-top: 8px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .navlink { flex: none; white-space: nowrap; }
+
+  /* section-head: deixa o título quebrar em telas estreitas */
+  .section-head { flex-wrap: wrap; gap: 10px; }
+  .section-head h2 { white-space: normal; font-size: 19px; }
+  .section-head .bar { min-width: 24px; }
+
+  /* savebar e cabeçalho do palpite quebram se faltar espaço */
+  .savebar { flex-wrap: wrap; }
+  .pc-top { flex-wrap: wrap; }
+
+  /* tabelas largas rolam na horizontal no celular */
+  .alm-table-wrap { overflow-x: auto; }
 }
 
 /* ============ CLASSIFICAÇÃO · GRUPOS ============ */
