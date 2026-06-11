@@ -1,9 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDay, formatTime } from "@/lib/format";
 import { groupLabel, stageLabel } from "@/lib/football/types";
 import { Crest } from "@/components/Crest";
+import { formatDuration } from "@/components/Countdown";
+
+// Abaixo deste limiar mostramos a contagem regressiva ("Fecha em …") em vez de "Aberto".
+const SOON_MS = 12 * 60 * 60 * 1000; // 12h
+
+function DeadlinePill({ kickoff }: { kickoff: string }) {
+  const targetMs = new Date(kickoff).getTime();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const remaining = targetMs - now;
+  if (remaining <= 0) return <span className="pill closed">Fechado</span>;
+  if (remaining <= SOON_MS)
+    return (
+      <span className="pill soon" suppressHydrationWarning>
+        Fecha em {formatDuration(remaining)}
+      </span>
+    );
+  return <span className="pill open">Aberto</span>;
+}
 
 export interface EditableMatch {
   matchId: number;
@@ -116,7 +139,7 @@ export default function PredictionsEditor({
                 {m.group ? ` · ${groupLabel(m.group)}` : ""} ·{" "}
                 <b>{formatTime(kickoff)}</b> · {formatDay(kickoff)}
               </span>
-              <span className="pill open">Aberto</span>
+              <DeadlinePill kickoff={m.kickoff} />
             </div>
             <div className="pc-body">
               <div className="pteam right">

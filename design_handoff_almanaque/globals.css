@@ -1,0 +1,101 @@
+/* ============================================================
+   app/globals.css — Bolão da Copa 2026 · tema "Almanaque"
+   Tailwind v4. Cole isto no lugar do globals.css atual.
+   Importe bolao.css (utilitários de componente) logo abaixo.
+   ============================================================ */
+
+@import "tailwindcss";
+@import "./bolao.css";   /* coloque bolao.css em app/bolao.css, ou ajuste o caminho */
+
+/* ---- TOKENS: tema claro (padrão) ---- */
+:root {
+  --paper:      #efe7d6;
+  --paper-2:    #faf5ea;
+  --paper-3:    #f3ecdd;
+  --ink:        #1d2a20;
+  --ink-soft:   #5e6a5c;
+  --ink-faint:  #8a9384;
+  --line:       rgba(29,42,32,0.16);
+  --line-soft:  rgba(29,42,32,0.09);
+  --green:      #0c6e3a;
+  --green-deep: #084d29;
+  --gold:       #b58a2e;
+  --gold-bright:#d9ab47;
+  --gold-foil:  #e8c869;
+  --red:        #b23a2a;
+  --card-shadow:       3px 4px 0 rgba(29,42,32,0.13);
+  --card-shadow-hover: 5px 7px 0 rgba(12,110,58,0.22);
+  --seal-ink:   var(--green-deep);
+}
+
+/* ---- TOKENS: tema escuro ---- */
+[data-theme="dark"] {
+  --paper:      #0e1611;
+  --paper-2:    #16221a;
+  --paper-3:    #111b15;
+  --ink:        #f0e9d6;
+  --ink-soft:   #a4b0a2;
+  --ink-faint:  #6f7d6f;
+  --line:       rgba(240,233,214,0.16);
+  --line-soft:  rgba(240,233,214,0.08);
+  --green:      #36a868;
+  --green-deep: #1d6f43;
+  --gold:       #d9ab47;
+  --gold-bright:#e8c869;
+  --gold-foil:  #f0d784;
+  --red:        #d8654f;
+  --card-shadow:       3px 4px 0 rgba(0,0,0,0.45);
+  --card-shadow-hover: 5px 7px 0 rgba(54,168,104,0.30);
+  --seal-ink:   var(--gold-foil);
+}
+
+/* ---- Expor tokens + fontes ao Tailwind v4 ----
+   As variáveis de fonte (--font-*) vêm do next/font no root layout.  */
+@theme inline {
+  --color-paper:      var(--paper);
+  --color-paper-2:    var(--paper-2);
+  --color-paper-3:    var(--paper-3);
+  --color-ink:        var(--ink);
+  --color-ink-soft:   var(--ink-soft);
+  --color-ink-faint:  var(--ink-faint);
+  --color-green:      var(--green);
+  --color-green-deep: var(--green-deep);
+  --color-gold:       var(--gold);
+  --color-gold-bright:var(--gold-bright);
+  --color-gold-foil:  var(--gold-foil);
+  --color-red:        var(--red);
+
+  --font-serif: var(--font-caslon), Georgia, serif;
+  --font-sans:  var(--font-archivo), system-ui, sans-serif;
+  --font-mono:  var(--font-mono), "Space Mono", monospace;
+}
+
+/* ---- Base ---- */
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--line-soft) 0.6px, transparent 0.7px);
+  background-size: 5px 5px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  /* NÃO adicione transition em color/background-color aqui:
+     anima a partir de variáveis CSS e trava no valor antigo no toggle. */
+}
+
+/* textura de grão (papel) */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: .5; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: .35; }
+
+::selection { background: var(--gold-foil); color: var(--green-deep); }
+
+/* Garanta que o conteúdo da app fique acima da textura */
+body > * { position: relative; z-index: 1; }

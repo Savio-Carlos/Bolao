@@ -9,7 +9,7 @@ const LINKS = [
   { href: "/palpites", label: "Meus palpites" },
   { href: "/torneio", label: "Copa" },
   { href: "/ranking", label: "Ranking" },
-  { href: "/estatisticas", label: "Stats" },
+  { href: "/estatisticas", label: "Estatísticas" },
   { href: "/graficos", label: "Gráficos" },
 ];
 

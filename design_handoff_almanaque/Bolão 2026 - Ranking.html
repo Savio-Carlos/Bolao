@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão da Copa 2026 — Ranking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/bolao.css">
+<style>
+  /* ---- podium ---- */
+  .podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 14px; align-items: end; margin: 26px 0 30px; }
+  .pod { position: relative; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 4px; box-shadow: var(--card-shadow); padding: 18px 14px 16px; text-align: center; }
+  .pod.first { padding-top: 26px; }
+  .pod .rib { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); font-family: "Space Mono", monospace; font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--paper-2); background: var(--ink); padding: 3px 10px; border-radius: 2px; text-transform: uppercase; }
+  .pod .pmedal { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 10px; display: grid; place-items: center; font-family: "Libre Caslon Display", serif; font-size: 26px; border: 2px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper-2); }
+  .pod.first .pmedal { width: 70px; height: 70px; font-size: 32px; background: radial-gradient(circle at 38% 30%, var(--gold-foil), var(--gold) 72%); color: var(--green-deep); }
+  .pod.second .pmedal { background: radial-gradient(circle at 38% 30%, #e9e9e3, #b7b9b2 72%); color: #3c423c; }
+  .pod.third .pmedal { background: radial-gradient(circle at 38% 30%, #e3b483, #b9824f 72%); color: #4a2f17; }
+  .pod .pname { font-family: "Libre Caslon Display", serif; font-size: 21px; line-height: 1; margin-bottom: 4px; }
+  .pod .ppts { font-family: "Space Mono", monospace; font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: .04em; }
+  .pod .pmeta { font-family: "Space Mono", monospace; font-size: 10px; color: var(--ink-faint); margin-top: 8px; }
+  .pod .pmeta b { color: var(--green); }
+  @media (max-width: 720px) { .podium { grid-template-columns: 1fr; } .pod.first { padding-top: 26px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="Bolão 2026 — Jogos.html">
+      <span class="ball"></span>
+      <span class="brand-name">Bolão <b>2026</b></span>
+    </a>
+    <nav class="nav">
+      <a class="navlink" href="Bolão 2026 — Jogos.html">Jogos</a>
+      <a class="navlink" href="Bolão 2026 — Classificação.html">Classificação</a>
+      <a class="navlink" href="Bolão 2026 — Palpites.html">Meus palpites</a>
+      <a class="navlink" href="Bolão 2026 — Copa.html">Copa</a>
+      <a class="navlink active" href="Bolão 2026 — Ranking.html">Ranking</a>
+      <a class="navlink" href="#">Stats</a>
+      <a class="navlink" href="#">Gráficos</a>
+    </nav>
+    <div class="nav-right">
+      <span class="user-chip"><span class="user-num">CA</span>carlos</span>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema">☾&#xFE0E;</button>
+      <span class="logout">Sair</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <p class="kicker">★ Classificação geral do bolão</p>
+    <h1>O <em>Ranking</em></h1>
+    <p class="sub">32 jogadores disputando o título de melhor palpiteiro do mundial. Placar exato vale <b>10</b>, acertar o vencedor vale <b>5</b>, e os palpites da Copa pagam <b>bônus</b>.</p>
+    <div class="page-rule"></div>
+  </header>
+
+  <!-- PÓDIO -->
+  <section class="podium">
+    <div class="pod second">
+      <span class="rib">Vice-líder</span>
+      <div class="pmedal">2</div>
+      <div class="pname">Mariana</div>
+      <div class="ppts">232 PTS</div>
+      <div class="pmeta"><b>16</b> exatos · <b>28</b> parciais</div>
+    </div>
+    <div class="pod first">
+      <span class="rib">★ Líder ★</span>
+      <div class="pmedal">1</div>
+      <div class="pname">Rafael</div>
+      <div class="ppts">248 PTS</div>
+      <div class="pmeta"><b>18</b> exatos · <b>30</b> parciais</div>
+    </div>
+    <div class="pod third">
+      <span class="rib">3º lugar</span>
+      <div class="pmedal">3</div>
+      <div class="pname">Lucas</div>
+      <div class="ppts">219 PTS</div>
+      <div class="pmeta"><b>14</b> exatos · <b>29</b> parciais</div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <h2><span class="star">★</span> Tabela completa</h2>
+    <span class="bar"></span>
+    <span class="daytag">32 jogadores</span>
+  </div>
+
+  <div class="alm-table-wrap">
+    <table class="alm-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th class="l">Jogador</th>
+          <th>Exatos</th>
+          <th>Parciais</th>
+          <th>Bônus</th>
+          <th class="r">Pontos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="rank-pos top">1</span></td><td class="l"><span class="name">Rafael</span></td><td class="num">18</td><td class="num">30</td><td class="num" style="color:var(--gold)">35</td><td class="r"><span class="pts">248</span></td></tr>
+        <tr><td><span class="rank-pos top">2</span></td><td class="l"><span class="name">Mariana</span></td><td class="num">16</td><td class="num">28</td><td class="num" style="color:var(--gold)">30</td><td class="r"><span class="pts">232</span></td></tr>
+        <tr><td><span class="rank-pos top">3</span></td><td class="l"><span class="name">Lucas</span></td><td class="num">14</td><td class="num">29</td><td class="num" style="color:var(--gold)">25</td><td class="r"><span class="pts">219</span></td></tr>
+        <tr class="me"><td><span class="rank-pos">4</span></td><td class="l"><span class="name">Carlos</span> <span class="num" style="color:var(--ink-faint);font-size:10px">você</span></td><td class="num">12</td><td class="num">23</td><td class="num" style="color:var(--gold)">20</td><td class="r"><span class="pts">185</span></td></tr>
+        <tr><td><span class="rank-pos">5</span></td><td class="l"><span class="name">Júlia</span></td><td class="num">11</td><td class="num">25</td><td class="num" style="color:var(--gold)">15</td><td class="r"><span class="pts">178</span></td></tr>
+        <tr><td><span class="rank-pos">6</span></td><td class="l"><span class="name">Pedro</span></td><td class="num">10</td><td class="num">24</td><td class="num" style="color:var(--gold)">20</td><td class="r"><span class="pts">170</span></td></tr>
+        <tr><td><span class="rank-pos">7</span></td><td class="l"><span class="name">Bia</span></td><td class="num">9</td><td class="num">27</td><td class="num" style="color:var(--gold)">10</td><td class="r"><span class="pts">162</span></td></tr>
+        <tr><td><span class="rank-pos">8</span></td><td class="l"><span class="name">Thiago</span></td><td class="num">8</td><td class="num">26</td><td class="num">—</td><td class="r"><span class="pts">151</span></td></tr>
+        <tr><td><span class="rank-pos">9</span></td><td class="l"><span class="name">Ana</span></td><td class="num">7</td><td class="num">23</td><td class="num" style="color:var(--gold)">15</td><td class="r"><span class="pts">143</span></td></tr>
+        <tr><td><span class="rank-pos">10</span></td><td class="l"><span class="name">Gustavo</span></td><td class="num">7</td><td class="num">21</td><td class="num">—</td><td class="r"><span class="pts">138</span></td></tr>
+        <tr><td><span class="rank-pos">11</span></td><td class="l"><span class="name">Fernanda</span></td><td class="num">5</td><td class="num">19</td><td class="num" style="color:var(--gold)">10</td><td class="r"><span class="pts">120</span></td></tr>
+        <tr><td><span class="rank-pos">12</span></td><td class="l"><span class="name">Diego</span></td><td class="num">4</td><td class="num">16</td><td class="num">—</td><td class="r"><span class="pts">99</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="almanac-foot">
+    <div class="legend">
+      <span><b>10 pts</b> placar exato</span>
+      <span><b>5 pts</b> vencedor / empate</span>
+      <span class="g">★ Bônus</span> <span>palpites da Copa</span>
+    </div>
+    <div class="mark">Bolão da Copa · MMXXVI</div>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn'), saved = null;
+    try { saved = localStorage.getItem('bolao-theme'); } catch (e) {}
+    if (saved) root.setAttribute('data-theme', saved);
+    function sync() { btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀\uFE0E' : '☾\uFE0E'; }
+    sync();
+    btn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('bolao-theme', next); } catch (e) {}
+      sync();
+    });
+  })();
+</script>
+</body>
+</html>

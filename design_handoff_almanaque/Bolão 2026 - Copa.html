@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão da Copa 2026 — Palpites da Copa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/bolao.css">
+<style>
+  .bonus-hero { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 22px; background: color-mix(in srgb, var(--gold-foil) 14%, var(--paper-2)); border: 2px solid var(--gold); border-radius: 4px; box-shadow: var(--card-shadow); padding: 20px 24px; margin-bottom: 14px; overflow: hidden; }
+  .bonus-hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .4; background: repeating-conic-gradient(from 0deg at 100% 0, transparent 0 14deg, color-mix(in srgb,var(--gold) 18%, transparent) 14deg 15deg); -webkit-mask: radial-gradient(circle at 100% 0, #000, transparent 60%); mask: radial-gradient(circle at 100% 0, #000, transparent 60%); }
+  .trophy { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; color: var(--green-deep); background: radial-gradient(circle at 38% 30%, var(--gold-foil), var(--gold) 72%); border: 2px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper-2); position: relative; z-index: 1; }
+  .bh-mid { position: relative; z-index: 1; }
+  .bh-mid .label { font-size: 11px; color: var(--gold); font-weight: 800; }
+  .bh-mid .pick-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .bpts { font-family: "Space Mono", monospace; font-weight: 700; font-size: 12px; color: var(--green-deep); background: color-mix(in srgb,var(--gold-foil) 60%, var(--paper-2)); border: 1.5px solid var(--ink); padding: 5px 11px; border-radius: 2px; white-space: nowrap; position: relative; z-index: 1; }
+
+  .bonus-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .bcard { background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .bcard .label { font-size: 10px; color: var(--ink-soft); font-weight: 800; display: flex; align-items: center; justify-content: space-between; }
+  .bcard .label .bpts { z-index: auto; }
+  .pick-row { display: flex; align-items: center; gap: 11px; }
+
+  .jersey { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; font-family: "Libre Caslon Display", serif; font-size: 16px; color: var(--paper-2); background: var(--green); border: 2px solid var(--ink); box-shadow: 0 0 0 3px var(--paper-2); }
+
+  .sel-wrap { position: relative; flex: 1; }
+  .sel-wrap::after { content: "▾"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--gold); font-size: 12px; }
+  .sel { width: 100%; appearance: none; -webkit-appearance: none; font-family: "Libre Caslon Display", serif; font-size: 21px; color: var(--ink); background: var(--paper-3); border: 1.5px solid var(--ink); border-radius: 3px; padding: 9px 30px 9px 13px; cursor: pointer; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .sel:focus { border-color: var(--green); box-shadow: inset 0 0 0 2px color-mix(in srgb,var(--green) 28%, transparent); }
+  .sel.sm { font-size: 14px; font-family: "Archivo", sans-serif; font-weight: 700; padding: 8px 28px 8px 11px; }
+  .bonus-hero .sel { font-size: 26px; }
+
+  .zebra-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .deadline { display: flex; align-items: center; gap: 10px; margin: 18px 0 6px; font-family: "Space Mono", monospace; font-size: 12px; color: var(--ink-soft); }
+  .deadline .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+  .deadline b { color: var(--gold); }
+
+  .picks-cell { display: inline-flex; align-items: center; gap: 6px; }
+  .picks-cell .nm { font-weight: 700; font-size: 12px; }
+  @media (max-width: 720px) { .bonus-grid, .bonus-hero { grid-template-columns: 1fr; } .bonus-hero { text-align: center; justify-items: center; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="Bolão 2026 — Jogos.html">
+      <span class="ball"></span>
+      <span class="brand-name">Bolão <b>2026</b></span>
+    </a>
+    <nav class="nav">
+      <a class="navlink" href="Bolão 2026 — Jogos.html">Jogos</a>
+      <a class="navlink" href="Bolão 2026 — Classificação.html">Classificação</a>
+      <a class="navlink" href="Bolão 2026 — Palpites.html">Meus palpites</a>
+      <a class="navlink active" href="Bolão 2026 — Copa.html">Copa</a>
+      <a class="navlink" href="Bolão 2026 — Ranking.html">Ranking</a>
+      <a class="navlink" href="#">Stats</a>
+      <a class="navlink" href="#">Gráficos</a>
+    </nav>
+    <div class="nav-right">
+      <span class="user-chip"><span class="user-num">CA</span>carlos</span>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema">☾&#xFE0E;</button>
+      <span class="logout">Sair</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <p class="kicker">★ Palpites de longo prazo — bônus pesado</p>
+    <h1>Palpites da <em>Copa</em></h1>
+    <p class="sub">As apostas que valem mais pontos no bolão. Editáveis <b>até o apito do primeiro jogo</b> — depois, é torcer. Campeão <b>30</b> · Vice <b>20</b> · Artilheiro <b>20</b> · Craque <b>15</b> · Maior zebra <b>20</b>.</p>
+    <div class="page-rule"></div>
+  </header>
+
+  <div class="deadline"><span class="dot"></span> Cartela fecha em <b>02:14:09</b> — abertura México × Croácia</div>
+
+  <!-- CAMPEÃO (hero) -->
+  <div class="bonus-hero">
+    <div class="trophy">★</div>
+    <div class="bh-mid">
+      <p class="label">Campeão do mundo</p>
+      <div class="pick-row">
+        <span class="crest f-bra" id="crestChamp"></span>
+        <div class="sel-wrap">
+          <select class="sel" data-crest="crestChamp">
+            <option value="f-bra" selected>Brasil</option>
+            <option value="f-arg">Argentina</option>
+            <option value="f-fra">França</option>
+            <option value="f-esp">Espanha</option>
+            <option value="f-eng">Inglaterra</option>
+            <option value="f-por">Portugal</option>
+            <option value="f-ger">Alemanha</option>
+            <option value="f-ned">Holanda</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <span class="bpts">+30 pts</span>
+  </div>
+
+  <div class="bonus-grid">
+    <!-- VICE -->
+    <div class="bcard">
+      <div class="label"><span>Vice-campeão</span><span class="bpts">+20</span></div>
+      <div class="pick-row">
+        <span class="crest sm f-fra" id="crestVice"></span>
+        <div class="sel-wrap">
+          <select class="sel sm" data-crest="crestVice">
+            <option value="f-fra" selected>França</option>
+            <option value="f-arg">Argentina</option>
+            <option value="f-bra">Brasil</option>
+            <option value="f-esp">Espanha</option>
+            <option value="f-eng">Inglaterra</option>
+            <option value="f-ned">Holanda</option>
+            <option value="f-por">Portugal</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTILHEIRO -->
+    <div class="bcard">
+      <div class="label"><span>Artilheiro</span><span class="bpts">+20</span></div>
+      <div class="pick-row">
+        <span class="jersey">9</span>
+        <div class="sel-wrap">
+          <select class="sel sm">
+            <option selected>Mbappé</option>
+            <option>Haaland</option>
+            <option>Vinícius Jr.</option>
+            <option>Kane</option>
+            <option>Julián Álvarez</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRAQUE -->
+    <div class="bcard">
+      <div class="label"><span>Melhor jogador</span><span class="bpts">+15</span></div>
+      <div class="pick-row">
+        <span class="jersey" style="background:var(--gold);color:var(--green-deep)">10</span>
+        <div class="sel-wrap">
+          <select class="sel sm">
+            <option selected>Vinícius Jr.</option>
+            <option>Bellingham</option>
+            <option>Mbappé</option>
+            <option>Pedri</option>
+            <option>Rodri</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIOR ZEBRA -->
+    <div class="bcard">
+      <div class="label"><span>Maior zebra</span><span class="bpts">+20</span></div>
+      <div class="zebra-row">
+        <div class="pick-row">
+          <span class="crest sm f-mar" id="crestZebra"></span>
+          <div class="sel-wrap">
+            <select class="sel sm" data-crest="crestZebra">
+              <option value="f-mar" selected>Marrocos</option>
+              <option value="f-jpn">Japão</option>
+              <option value="f-sen">Senegal</option>
+              <option value="f-aus">Austrália</option>
+              <option value="f-can">Canadá</option>
+            </select>
+          </div>
+        </div>
+        <div class="sel-wrap">
+          <select class="sel sm">
+            <option selected>chega à Semi</option>
+            <option>chega à Final</option>
+            <option>chega às Quartas</option>
+            <option>é Campeão</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="savebar" style="position:static;margin-top:16px;">
+    <span class="info">Sua cartela: <b>Brasil</b> campeão, <b>França</b> vice · zebra <b>Marrocos</b> na semi</span>
+    <button class="btn gold" id="saveBtn">Salvar cartela</button>
+  </div>
+
+  <!-- PALPITES DE TODOS -->
+  <div class="section-head">
+    <h2><span class="star">★</span> Palpites de todos</h2>
+    <span class="bar"></span>
+    <span class="daytag">Bônus a apurar</span>
+  </div>
+
+  <div class="alm-table-wrap">
+    <table class="alm-table">
+      <thead>
+        <tr>
+          <th class="l">Jogador</th>
+          <th>Campeão</th>
+          <th>Vice</th>
+          <th>Artilheiro</th>
+          <th>Craque</th>
+          <th>Maior zebra</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="me">
+          <td class="l"><span class="name">Carlos</span> <span class="num" style="color:var(--ink-faint);font-size:10px">você</span></td>
+          <td><span class="picks-cell"><span class="crest xs f-bra"></span><span class="nm">BRA</span></span></td>
+          <td><span class="picks-cell"><span class="crest xs f-fra"></span><span class="nm">FRA</span></span></td>
+          <td class="num" style="font-size:12px">Mbappé</td>
+          <td class="num" style="font-size:12px">Vini Jr.</td>
+          <td><span class="picks-cell"><span class="crest xs f-mar"></span><span class="nm">Semi</span></span></td>
+        </tr>
+        <tr>
+          <td class="l"><span class="name">Rafael</span></td>
+          <td><span class="picks-cell"><span class="crest xs f-arg"></span><span class="nm">ARG</span></span></td>
+          <td><span class="picks-cell"><span class="crest xs f-bra"></span><span class="nm">BRA</span></span></td>
+          <td class="num" style="font-size:12px">Julián Á.</td>
+          <td class="num" style="font-size:12px">Messi</td>
+          <td><span class="picks-cell"><span class="crest xs f-jpn"></span><span class="nm">Quartas</span></span></td>
+        </tr>
+        <tr>
+          <td class="l"><span class="name">Mariana</span></td>
+          <td><span class="picks-cell"><span class="crest xs f-fra"></span><span class="nm">FRA</span></span></td>
+          <td><span class="picks-cell"><span class="crest xs f-eng"></span><span class="nm">ENG</span></span></td>
+          <td class="num" style="font-size:12px">Mbappé</td>
+          <td class="num" style="font-size:12px">Bellingham</td>
+          <td><span class="picks-cell"><span class="crest xs f-sen"></span><span class="nm">Quartas</span></span></td>
+        </tr>
+        <tr>
+          <td class="l"><span class="name">Lucas</span></td>
+          <td><span class="picks-cell"><span class="crest xs f-esp"></span><span class="nm">ESP</span></span></td>
+          <td><span class="picks-cell"><span class="crest xs f-bra"></span><span class="nm">BRA</span></span></td>
+          <td class="num" style="font-size:12px">Kane</td>
+          <td class="num" style="font-size:12px">Pedri</td>
+          <td><span class="picks-cell"><span class="crest xs f-aus"></span><span class="nm">Oitavas</span></span></td>
+        </tr>
+        <tr>
+          <td class="l"><span class="name">Júlia</span></td>
+          <td><span class="picks-cell"><span class="crest xs f-bra"></span><span class="nm">BRA</span></span></td>
+          <td><span class="picks-cell"><span class="crest xs f-arg"></span><span class="nm">ARG</span></span></td>
+          <td class="num" style="font-size:12px">Vini Jr.</td>
+          <td class="num" style="font-size:12px">Vini Jr.</td>
+          <td><span class="picks-cell"><span class="crest xs f-mar"></span><span class="nm">Semi</span></span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="almanac-foot">
+    <div class="legend">
+      <span class="g">★ Bônus</span> <span>apurado ao fim de cada fase · valores ilustrativos</span>
+    </div>
+    <div class="mark">Bolão da Copa · MMXXVI</div>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast">Cartela salva! ✓</div>
+
+<script>
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn'), saved = null;
+    try { saved = localStorage.getItem('bolao-theme'); } catch (e) {}
+    if (saved) root.setAttribute('data-theme', saved);
+    function sync() { btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀\uFE0E' : '☾\uFE0E'; }
+    sync();
+    btn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('bolao-theme', next); } catch (e) {}
+      sync();
+    });
+
+    // crest follows select
+    document.querySelectorAll('select[data-crest]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var crest = document.getElementById(this.dataset.crest);
+        crest.className = crest.className.replace(/f-\w+/, this.value);
+      });
+    });
+
+    var toast = document.getElementById('toast');
+    document.getElementById('saveBtn').addEventListener('click', function () {
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 2200);
+    });
+  })();
+</script>
+</body>
+</html>

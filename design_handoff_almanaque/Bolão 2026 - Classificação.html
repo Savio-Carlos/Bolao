@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão da Copa 2026 — Classificação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/bolao.css">
+<style>
+  .groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .gcard { background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); overflow: hidden; }
+  .gcard h3 { margin: 0; font-family: "Archivo", sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; color: var(--paper-2); background: var(--green-deep); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .gcard h3 .gn { font-family: "Libre Caslon Display", serif; font-size: 16px; letter-spacing: 0; text-transform: none; color: var(--gold-foil); }
+  .gtable { width: 100%; border-collapse: collapse; }
+  .gtable thead th { font-family: "Space Mono", monospace; font-size: 9px; font-weight: 700; color: var(--ink-faint); padding: 6px 4px; text-transform: uppercase; }
+  .gtable thead th.l { text-align: left; padding-left: 10px; }
+  .gtable tbody td { padding: 7px 4px; font-size: 12px; text-align: center; border-top: 1px solid var(--line-soft); font-family: "Space Mono", monospace; }
+  .gtable tbody td.tm { text-align: left; padding-left: 10px; }
+  .gtable .tm-in { display: flex; align-items: center; gap: 7px; }
+  .gtable .tm-in .nm { font-family: "Archivo", sans-serif; font-weight: 700; font-size: 12px; white-space: nowrap; }
+  .gtable td.p { font-family: "Libre Caslon Display", serif; font-size: 16px; }
+  .gtable tr.q1 { background: color-mix(in srgb, var(--green) 13%, transparent); }
+  .gtable tr.q2 { background: color-mix(in srgb, var(--gold-foil) 16%, transparent); }
+  .gtable tr .pos { color: var(--ink-faint); }
+  .gtable tr.q1 .pos { color: var(--green); font-weight: 700; }
+  .gtable tr.q2 .pos { color: var(--gold); font-weight: 700; }
+
+  /* bracket */
+  .bracket { display: flex; gap: 18px; overflow-x: auto; padding: 4px 2px 14px; }
+  .bk-col { display: flex; flex-direction: column; gap: 14px; min-width: 210px; flex: none; justify-content: space-around; }
+  .bk-col > h3 { margin: 0 0 2px; font-family: "Archivo", sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; font-size: 11px; color: var(--ink-soft); text-align: center; }
+  .bk-col.final > h3 { color: var(--gold); }
+  .bk { background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); padding: 10px 12px; transition: transform .15s, box-shadow .15s; }
+  .bk:hover { transform: translate(-2px,-2px); box-shadow: var(--card-shadow-hover); border-color: var(--green); }
+  .bk.champ { border-color: var(--gold); background: color-mix(in srgb, var(--gold-foil) 12%, var(--paper-2)); }
+  .bk .row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .bk .row .nm { flex: 1; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk .row.win .nm { font-family: "Libre Caslon Display", serif; font-weight: 400; font-size: 15px; }
+  .bk .row.lose { opacity: .5; }
+  .bk .row .sc { font-family: "Space Mono", monospace; font-size: 13px; color: var(--ink-soft); }
+  .bk .div { height: 1px; background: var(--line-soft); margin: 2px 0; }
+  .bk .st { font-family: "Space Mono", monospace; font-size: 9px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .08em; margin-top: 6px; display: block; }
+  .bk .st.live { color: var(--red); font-weight: 700; }
+  @media (max-width: 820px) { .groups { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .groups { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="Bolão 2026 — Jogos.html">
+      <span class="ball"></span>
+      <span class="brand-name">Bolão <b>2026</b></span>
+    </a>
+    <nav class="nav">
+      <a class="navlink" href="Bolão 2026 — Jogos.html">Jogos</a>
+      <a class="navlink active" href="Bolão 2026 — Classificação.html">Classificação</a>
+      <a class="navlink" href="Bolão 2026 — Palpites.html">Meus palpites</a>
+      <a class="navlink" href="Bolão 2026 — Copa.html">Copa</a>
+      <a class="navlink" href="Bolão 2026 — Ranking.html">Ranking</a>
+      <a class="navlink" href="#">Stats</a>
+      <a class="navlink" href="#">Gráficos</a>
+    </nav>
+    <div class="nav-right">
+      <span class="user-chip"><span class="user-num">CA</span>carlos</span>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema">☾&#xFE0E;</button>
+      <span class="logout">Sair</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <p class="kicker">★ Quem avança no mundial</p>
+    <h1>A <em>Classificação</em></h1>
+    <p class="sub">Os dois primeiros de cada grupo avançam direto, mais os <b>8 melhores terceiros</b>. Critério de desempate: pontos → saldo de gols → gols pró.</p>
+    <div class="page-rule"></div>
+  </header>
+
+  <div class="section-head">
+    <h2><span class="star">★</span> Fase de grupos</h2>
+    <span class="bar"></span>
+  </div>
+
+  <section class="groups">
+    <!-- GRUPO A -->
+    <div class="gcard">
+      <h3><span>Grupo</span><span class="gn">A</span></h3>
+      <table class="gtable">
+        <thead><tr><th class="l">Seleção</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead>
+        <tbody>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">1</span><span class="crest xs f-mex"></span><span class="nm">México</span></div></td><td class="p">7</td><td>3</td><td>2</td><td>1</td><td>0</td><td>+4</td></tr>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">2</span><span class="crest xs f-cro"></span><span class="nm">Croácia</span></div></td><td class="p">6</td><td>3</td><td>2</td><td>0</td><td>1</td><td>+2</td></tr>
+          <tr class="q2"><td class="tm"><div class="tm-in"><span class="pos">3</span><span class="crest xs f-sen"></span><span class="nm">Senegal</span></div></td><td class="p">4</td><td>3</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td class="tm"><div class="tm-in"><span class="pos">4</span><span class="crest xs f-kor"></span><span class="nm">Coreia</span></div></td><td class="p">1</td><td>3</td><td>0</td><td>1</td><td>2</td><td>−6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- GRUPO B -->
+    <div class="gcard">
+      <h3><span>Grupo</span><span class="gn">B</span></h3>
+      <table class="gtable">
+        <thead><tr><th class="l">Seleção</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead>
+        <tbody>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">1</span><span class="crest xs f-bel"></span><span class="nm">Bélgica</span></div></td><td class="p">9</td><td>3</td><td>3</td><td>0</td><td>0</td><td>+5</td></tr>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">2</span><span class="crest xs f-can"></span><span class="nm">Canadá</span></div></td><td class="p">4</td><td>3</td><td>1</td><td>1</td><td>1</td><td>+1</td></tr>
+          <tr class="q2"><td class="tm"><div class="tm-in"><span class="pos">3</span><span class="crest xs f-mar"></span><span class="nm">Marrocos</span></div></td><td class="p">4</td><td>3</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td class="tm"><div class="tm-in"><span class="pos">4</span><span class="crest xs f-sau"></span><span class="nm">Arábia S.</span></div></td><td class="p">0</td><td>3</td><td>0</td><td>0</td><td>3</td><td>−6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- GRUPO C -->
+    <div class="gcard">
+      <h3><span>Grupo</span><span class="gn">C</span></h3>
+      <table class="gtable">
+        <thead><tr><th class="l">Seleção</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead>
+        <tbody>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">1</span><span class="crest xs f-arg"></span><span class="nm">Argentina</span></div></td><td class="p">7</td><td>3</td><td>2</td><td>1</td><td>0</td><td>+5</td></tr>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">2</span><span class="crest xs f-col"></span><span class="nm">Colômbia</span></div></td><td class="p">6</td><td>3</td><td>2</td><td>0</td><td>1</td><td>+1</td></tr>
+          <tr class="q2"><td class="tm"><div class="tm-in"><span class="pos">3</span><span class="crest xs f-jpn"></span><span class="nm">Japão</span></div></td><td class="p">3</td><td>3</td><td>1</td><td>0</td><td>2</td><td>−1</td></tr>
+          <tr><td class="tm"><div class="tm-in"><span class="pos">4</span><span class="crest xs f-aus"></span><span class="nm">Austrália</span></div></td><td class="p">1</td><td>3</td><td>0</td><td>1</td><td>2</td><td>−5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- GRUPO D -->
+    <div class="gcard">
+      <h3><span>Grupo</span><span class="gn">D</span></h3>
+      <table class="gtable">
+        <thead><tr><th class="l">Seleção</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead>
+        <tbody>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">1</span><span class="crest xs f-esp"></span><span class="nm">Espanha</span></div></td><td class="p">7</td><td>3</td><td>2</td><td>1</td><td>0</td><td>+6</td></tr>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">2</span><span class="crest xs f-por"></span><span class="nm">Portugal</span></div></td><td class="p">6</td><td>3</td><td>2</td><td>0</td><td>1</td><td>+3</td></tr>
+          <tr class="q2"><td class="tm"><div class="tm-in"><span class="pos">3</span><span class="crest xs f-uru"></span><span class="nm">Uruguai</span></div></td><td class="p">4</td><td>3</td><td>1</td><td>1</td><td>1</td><td>+1</td></tr>
+          <tr><td class="tm"><div class="tm-in"><span class="pos">4</span><span class="crest xs f-sui"></span><span class="nm">Suíça</span></div></td><td class="p">0</td><td>3</td><td>0</td><td>0</td><td>3</td><td>−10</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- GRUPO E -->
+    <div class="gcard">
+      <h3><span>Grupo</span><span class="gn">E</span></h3>
+      <table class="gtable">
+        <thead><tr><th class="l">Seleção</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead>
+        <tbody>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">1</span><span class="crest xs f-bra"></span><span class="nm">Brasil</span></div></td><td class="p">9</td><td>3</td><td>3</td><td>0</td><td>0</td><td>+7</td></tr>
+          <tr class="q1"><td class="tm"><div class="tm-in"><span class="pos">2</span><span class="crest xs f-fra"></span><span class="nm">França</span></div></td><td class="p">6</td><td>3</td><td>2</td><td>0</td><td>1</td><td>+3</td></tr>
+          <tr class="q2"><td class="tm"><div class="tm-in"><span class="pos">3</span><span class="crest xs f-eng"></span><span class="nm">Inglaterra</span></div></td><td class="p">3</td><td>3</td><td>1</td><td>0</td><td>2</td><td>−2</td></tr>
+          <tr><td class="tm"><div class="tm-in"><span class="pos">4</span><span class="crest xs f-usa"></span><span class="nm">EUA</span></div></td><td class="p">1</td><td>3</td><td>0</td><td>1</td><td>2</td><td>−8</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- legenda card -->
+    <div class="gcard" style="display:flex;flex-direction:column;justify-content:center;padding:16px 16px;">
+      <p class="legend" style="flex-direction:column;align-items:flex-start;gap:10px;">
+        <span><span class="swatch" style="background:color-mix(in srgb,var(--green) 50%,var(--paper-2))"></span> 1º e 2º classificam direto</span>
+        <span><span class="swatch" style="background:color-mix(in srgb,var(--gold-foil) 70%,var(--paper-2))"></span> os 8 melhores 3ºs avançam</span>
+        <span style="color:var(--ink-faint)">P pontos · J jogos · SG saldo</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <h2><span class="star">★</span> Mata-mata</h2>
+    <span class="bar"></span>
+    <span class="daytag">Rumo ao título</span>
+  </div>
+
+  <section class="bracket">
+    <div class="bk-col">
+      <h3>Oitavas</h3>
+      <div class="bk">
+        <div class="row win"><span class="crest xs f-bra"></span><span class="nm">Brasil</span><span class="sc">2</span></div>
+        <div class="div"></div>
+        <div class="row lose"><span class="crest xs f-mar"></span><span class="nm">Marrocos</span><span class="sc">1</span></div>
+        <span class="st">Encerrado</span>
+      </div>
+      <div class="bk">
+        <div class="row win"><span class="crest xs f-arg"></span><span class="nm">Argentina</span><span class="sc">3</span></div>
+        <div class="div"></div>
+        <div class="row lose"><span class="crest xs f-por"></span><span class="nm">Portugal</span><span class="sc">1</span></div>
+        <span class="st">Encerrado</span>
+      </div>
+      <div class="bk">
+        <div class="row"><span class="crest xs f-fra"></span><span class="nm">França</span><span class="sc">1</span></div>
+        <div class="div"></div>
+        <div class="row"><span class="crest xs f-esp"></span><span class="nm">Espanha</span><span class="sc">1</span></div>
+        <span class="st live">● Ao vivo · 78'</span>
+      </div>
+      <div class="bk">
+        <div class="row"><span class="crest xs f-mex"></span><span class="nm">México</span><span class="sc">—</span></div>
+        <div class="div"></div>
+        <div class="row"><span class="crest xs f-bel"></span><span class="nm">Bélgica</span><span class="sc">—</span></div>
+        <span class="st">Hoje · 21:00</span>
+      </div>
+    </div>
+
+    <div class="bk-col" style="justify-content:space-around;">
+      <h3>Quartas</h3>
+      <div class="bk">
+        <div class="row win"><span class="crest xs f-bra"></span><span class="nm">Brasil</span><span class="sc">2</span></div>
+        <div class="div"></div>
+        <div class="row lose"><span class="crest xs f-arg"></span><span class="nm">Argentina</span><span class="sc">0</span></div>
+        <span class="st">Encerrado</span>
+      </div>
+      <div class="bk">
+        <div class="row"><span class="nm" style="color:var(--ink-faint)">Vence FRA/ESP</span></div>
+        <div class="div"></div>
+        <div class="row"><span class="nm" style="color:var(--ink-faint)">Vence MEX/BEL</span></div>
+        <span class="st">Sáb · 16:00</span>
+      </div>
+    </div>
+
+    <div class="bk-col" style="justify-content:center;">
+      <h3>Semifinal</h3>
+      <div class="bk">
+        <div class="row"><span class="crest xs f-bra"></span><span class="nm">Brasil</span><span class="sc">—</span></div>
+        <div class="div"></div>
+        <div class="row"><span class="nm" style="color:var(--ink-faint)">A definir</span></div>
+        <span class="st">Ter · 19:00</span>
+      </div>
+    </div>
+
+    <div class="bk-col final" style="justify-content:center;">
+      <h3>★ Final ★</h3>
+      <div class="bk champ">
+        <div class="row"><span class="crest xs f-bra"></span><span class="nm">Brasil</span><span class="sc">—</span></div>
+        <div class="div"></div>
+        <div class="row"><span class="nm" style="color:var(--ink-faint)">A definir</span></div>
+        <span class="st">19 Jul · MetLife</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="almanac-foot">
+    <div class="legend">
+      <span class="g">★</span> <span>Tabela ilustrativa — atualiza conforme os resultados entram</span>
+    </div>
+    <div class="mark">Bolão da Copa · MMXXVI</div>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn'), saved = null;
+    try { saved = localStorage.getItem('bolao-theme'); } catch (e) {}
+    if (saved) root.setAttribute('data-theme', saved);
+    function sync() { btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀\uFE0E' : '☾\uFE0E'; }
+    sync();
+    btn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('bolao-theme', next); } catch (e) {}
+      sync();
+    });
+  })();
+</script>
+</body>
+</html>

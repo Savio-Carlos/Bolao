@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão da Copa 2026 — Estatísticas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/bolao.css">
+<style>
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .statcard { position: relative; background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); padding: 16px 18px; display: flex; gap: 16px; align-items: flex-start; transition: transform .18s, box-shadow .18s; overflow: hidden; }
+  .statcard:hover { transform: translate(-2px,-3px); box-shadow: var(--card-shadow-hover); }
+  .statcard .badge { width: 54px; height: 54px; flex: none; border-radius: 50%; display: grid; place-items: center; font-family: "Libre Caslon Display", serif; font-size: 22px; color: var(--green-deep); background: radial-gradient(circle at 38% 32%, var(--gold-foil), var(--gold) 72%); border: 2px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper-2); }
+  .statcard.cold .badge { background: radial-gradient(circle at 38% 32%, #cfe0e8, #8fb0c4 72%); color: #213642; }
+  .statcard .st-label { font-family: "Archivo", sans-serif; text-transform: uppercase; letter-spacing: .1em; font-size: 10px; font-weight: 800; color: var(--ink-soft); }
+  .statcard .st-value { font-family: "Libre Caslon Display", serif; font-size: 28px; line-height: 1; margin: 6px 0 4px; }
+  .statcard .st-value small { font-size: 15px; color: var(--ink-soft); }
+  .statcard .st-who { font-family: "Space Mono", monospace; font-size: 11px; color: var(--green); font-weight: 700; }
+  .statcard .corner { position: absolute; top: 8px; right: 11px; font-family: "Space Mono", monospace; font-size: 10px; color: var(--ink-faint); letter-spacing: .06em; }
+
+  .fase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fasecard { background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); overflow: hidden; }
+  .fasecard h3 { margin: 0; font-family: "Archivo", sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: var(--paper-2); background: var(--green-deep); padding: 8px 13px; display: flex; align-items: center; justify-content: space-between; }
+  .fasecard h3 .ph { font-family: "Libre Caslon Display", serif; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--gold-foil); }
+  .fasetable { width: 100%; border-collapse: collapse; }
+  .fasetable td { padding: 7px 13px; font-size: 13px; border-top: 1px solid var(--line-soft); }
+  .fasetable td.pos { width: 28px; font-family: "Libre Caslon Display", serif; font-size: 15px; color: var(--ink-faint); }
+  .fasetable tr:first-child td.pos { color: var(--gold); }
+  .fasetable td.nm { font-weight: 700; }
+  .fasetable td.pt { text-align: right; font-family: "Space Mono", monospace; font-weight: 700; color: var(--green); }
+  .fasetable tr.me { background: color-mix(in srgb, var(--green) 12%, transparent); }
+  @media (max-width: 720px) { .stat-grid, .fase-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="Bolão 2026 — Jogos.html">
+      <span class="ball"></span>
+      <span class="brand-name">Bolão <b>2026</b></span>
+    </a>
+    <nav class="nav">
+      <a class="navlink" href="Bolão 2026 — Jogos.html">Jogos</a>
+      <a class="navlink" href="Bolão 2026 — Classificação.html">Classificação</a>
+      <a class="navlink" href="Bolão 2026 — Palpites.html">Meus palpites</a>
+      <a class="navlink" href="Bolão 2026 — Copa.html">Copa</a>
+      <a class="navlink" href="Bolão 2026 — Ranking.html">Ranking</a>
+      <a class="navlink active" href="Bolão 2026 — Estatísticas.html">Stats</a>
+      <a class="navlink" href="Bolão 2026 — Gráficos.html">Gráficos</a>
+    </nav>
+    <div class="nav-right">
+      <span class="user-chip"><span class="user-num">CA</span>carlos</span>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema">☾&#xFE0E;</button>
+      <span class="logout">Sair</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <p class="kicker">★ Os recordes do bolão</p>
+    <h1>As <em>Estatísticas</em></h1>
+    <p class="sub">Quem está quente, quem está gelado, e quem manda em cada fase do mundial. <b>Acerto</b> = palpite que pontuou · <b>Erro</b> = palpite que zerou.</p>
+    <div class="page-rule"></div>
+  </header>
+
+  <!-- DESTAQUES -->
+  <section class="stat-grid">
+    <div class="statcard hot">
+      <div class="badge">🔥</div>
+      <div>
+        <p class="st-label">Maior sequência de acertos</p>
+        <p class="st-value">8 <small>seguidos</small></p>
+        <p class="st-who">Rafael</p>
+      </div>
+      <span class="corner">EM ALTA</span>
+    </div>
+    <div class="statcard cold">
+      <div class="badge">🧊</div>
+      <div>
+        <p class="st-label">Maior sequência de erros</p>
+        <p class="st-value">5 <small>seguidos</small></p>
+        <p class="st-who" style="color:var(--red)">Diego</p>
+      </div>
+      <span class="corner">GELADO</span>
+    </div>
+    <div class="statcard hot">
+      <div class="badge">🎯</div>
+      <div>
+        <p class="st-label">Mais placares cravados</p>
+        <p class="st-value">18 <small>placares</small></p>
+        <p class="st-who">Rafael</p>
+      </div>
+      <span class="corner">PONTARIA</span>
+    </div>
+    <div class="statcard cold">
+      <div class="badge">🥶</div>
+      <div>
+        <p class="st-label">Pé frio · menor aproveitamento</p>
+        <p class="st-value">38<small>%</small></p>
+        <p class="st-who" style="color:var(--red)">Diego</p>
+      </div>
+      <span class="corner">AZAR</span>
+    </div>
+  </section>
+
+  <!-- RANKING POR FASE -->
+  <div class="section-head">
+    <h2><span class="star">★</span> Ranking por fase</h2>
+    <span class="bar"></span>
+    <span class="daytag">Pontos na fase</span>
+  </div>
+
+  <section class="fase-grid">
+    <div class="fasecard">
+      <h3><span>Fase de grupos</span><span class="ph">48 jogos</span></h3>
+      <table class="fasetable">
+        <tbody>
+          <tr><td class="pos">1</td><td class="nm">Rafael</td><td class="pt">142</td></tr>
+          <tr><td class="pos">2</td><td class="nm">Mariana</td><td class="pt">131</td></tr>
+          <tr><td class="pos">3</td><td class="nm">Lucas</td><td class="pt">124</td></tr>
+          <tr class="me"><td class="pos">4</td><td class="nm">Carlos</td><td class="pt">110</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="fasecard">
+      <h3><span>Oitavas de final</span><span class="ph">16 → 8</span></h3>
+      <table class="fasetable">
+        <tbody>
+          <tr><td class="pos">1</td><td class="nm">Mariana</td><td class="pt">45</td></tr>
+          <tr class="me"><td class="pos">2</td><td class="nm">Carlos</td><td class="pt">40</td></tr>
+          <tr><td class="pos">3</td><td class="nm">Lucas</td><td class="pt">35</td></tr>
+          <tr><td class="pos">4</td><td class="nm">Rafael</td><td class="pt">30</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="fasecard">
+      <h3><span>Quartas de final</span><span class="ph">8 → 4</span></h3>
+      <table class="fasetable">
+        <tbody>
+          <tr><td class="pos">1</td><td class="nm">Rafael</td><td class="pt">25</td></tr>
+          <tr><td class="pos">2</td><td class="nm">Júlia</td><td class="pt">20</td></tr>
+          <tr class="me"><td class="pos">3</td><td class="nm">Carlos</td><td class="pt">20</td></tr>
+          <tr><td class="pos">4</td><td class="nm">Pedro</td><td class="pt">15</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="fasecard">
+      <h3><span>Semifinais</span><span class="ph">4 → 2</span></h3>
+      <table class="fasetable">
+        <tbody>
+          <tr><td class="pos">1</td><td class="nm">Lucas</td><td class="pt">15</td></tr>
+          <tr><td class="pos">2</td><td class="nm">Mariana</td><td class="pt">15</td></tr>
+          <tr class="me"><td class="pos">3</td><td class="nm">Carlos</td><td class="pt">15</td></tr>
+          <tr><td class="pos">4</td><td class="nm">Rafael</td><td class="pt">10</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="almanac-foot">
+    <div class="legend">
+      <span><b>Acerto</b> palpite que pontuou</span>
+      <span style="color:var(--ink-faint)">Erro = palpite que zerou · pé frio exige 5+ palpites</span>
+    </div>
+    <div class="mark">Bolão da Copa · MMXXVI</div>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn'), saved = null;
+    try { saved = localStorage.getItem('bolao-theme'); } catch (e) {}
+    if (saved) root.setAttribute('data-theme', saved);
+    function sync() { btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀\uFE0E' : '☾\uFE0E'; }
+    sync();
+    btn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('bolao-theme', next); } catch (e) {}
+      sync();
+    });
+  })();
+</script>
+</body>
+</html>

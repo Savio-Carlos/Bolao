@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão da Copa 2026 — Meus palpites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/bolao.css">
+<style>
+  .pcard { position: relative; background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); padding: 13px 18px 14px; margin-bottom: 12px; }
+  .pcard.locked { opacity: .9; background: var(--paper-3); }
+  .pc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .pc-meta { font-family: "Space Mono", monospace; font-size: 10px; color: var(--ink-soft); letter-spacing: .03em; text-transform: uppercase; }
+  .pc-meta b { color: var(--green); }
+  .pill { font-family: "Archivo", sans-serif; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 4px 9px; border-radius: 2px; border: 1.5px solid var(--ink); white-space: nowrap; }
+  .pill.open { background: color-mix(in srgb, var(--green) 16%, var(--paper-2)); color: var(--green-deep); }
+  .pill.soon { background: color-mix(in srgb, var(--gold-foil) 28%, var(--paper-2)); color: var(--green-deep); }
+  .pill.closed { background: var(--paper-3); color: var(--ink-faint); }
+
+  .pc-body { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; }
+  .pteam { display: flex; align-items: center; gap: 11px; }
+  .pteam.right { flex-direction: row-reverse; text-align: right; }
+  .pteam .nm { font-weight: 800; text-transform: uppercase; letter-spacing: .02em; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pteam .avg { display: block; font-family: "Space Mono", monospace; font-size: 9px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+  .score-in { display: flex; align-items: center; gap: 9px; }
+  .sc-in { width: 48px; height: 52px; text-align: center; font-family: "Libre Caslon Display", serif; font-size: 26px; color: var(--ink); background: var(--paper-3); border: 1.5px solid var(--ink); border-radius: 3px; outline: none; transition: border-color .15s, box-shadow .15s, background .15s; box-shadow: inset 0 -3px 0 rgba(29,42,32,.07); }
+  .sc-in::placeholder { color: var(--ink-faint); opacity: .5; }
+  .sc-in:focus { border-color: var(--green); background: var(--paper-2); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--green) 30%, transparent); }
+  .sc-in:disabled { opacity: .6; cursor: not-allowed; }
+  .score-in .x { font-family: "Space Mono", monospace; color: var(--gold); font-size: 16px; }
+
+  .locked-score { display: flex; align-items: center; gap: 9px; }
+  .locked-score .ls { font-family: "Libre Caslon Display", serif; font-size: 26px; }
+  .locked-score .x { color: var(--gold); font-size: 15px; }
+  .pts-badge { font-family: "Archivo", sans-serif; font-weight: 800; font-size: 11px; letter-spacing: .06em; padding: 4px 9px; border-radius: 2px; border: 1.5px solid var(--ink); white-space: nowrap; }
+  .pts-badge.exato { background: var(--green); color: #faf5ea; }
+  .pts-badge.parcial { background: color-mix(in srgb, var(--gold-foil) 50%, var(--paper-2)); color: var(--green-deep); }
+  .pts-badge.zero { background: var(--paper-3); color: var(--ink-faint); }
+  .pc-result { margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line); font-family: "Space Mono", monospace; font-size: 10px; color: var(--ink-soft); display: flex; justify-content: space-between; align-items: center; }
+  .pc-result b { color: var(--ink); }
+
+  /* save bar */
+  .savebar { position: sticky; bottom: 16px; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: 14px; margin: 18px 0 8px; padding: 12px 16px; background: var(--ink); border: 1.5px solid var(--ink); border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .savebar .info { font-family: "Space Mono", monospace; font-size: 12px; color: var(--paper-2); }
+  .savebar .info b { color: var(--gold-foil); }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); z-index: 60; background: var(--green); color: #faf5ea; font-family: "Archivo", sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; padding: 12px 22px; border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: 0 8px 24px rgba(0,0,0,.3); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 720px) { .pc-body { gap: 8px; } .sc-in { width: 42px; height: 46px; font-size: 22px; } .pteam .nm { font-size: 13px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="Bolão 2026 — Jogos.html">
+      <span class="ball"></span>
+      <span class="brand-name">Bolão <b>2026</b></span>
+    </a>
+    <nav class="nav">
+      <a class="navlink" href="Bolão 2026 — Jogos.html">Jogos</a>
+      <a class="navlink" href="Bolão 2026 — Classificação.html">Classificação</a>
+      <a class="navlink active" href="Bolão 2026 — Palpites.html">Meus palpites</a>
+      <a class="navlink" href="Bolão 2026 — Copa.html">Copa</a>
+      <a class="navlink" href="Bolão 2026 — Ranking.html">Ranking</a>
+      <a class="navlink" href="#">Stats</a>
+      <a class="navlink" href="#">Gráficos</a>
+    </nav>
+    <div class="nav-right">
+      <span class="user-chip"><span class="user-num">CA</span>carlos</span>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema">☾&#xFE0E;</button>
+      <span class="logout">Sair</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <p class="kicker">★ Sua cartela de palpites</p>
+    <h1>Meus <em>Palpites</em></h1>
+    <p class="sub">Cravou o placar? Vale <b>10</b>. Acertou só o vencedor ou o empate? Vale <b>5</b>. Você pode editar cada jogo <b>até o apito inicial</b>.</p>
+    <div class="page-rule"></div>
+  </header>
+
+  <!-- progress ticket -->
+  <section class="strip" style="grid-template-columns:1fr;">
+    <div class="ticket">
+      <div class="medal" id="progNum">14</div>
+      <div style="flex:1;">
+        <p class="label">Seu progresso nesta rodada</p>
+        <p class="big" id="progBig">14 <small>de 18 jogos preenchidos</small></p>
+        <div class="ticket-meta">
+          <span><b id="openCount">4</b> abertos agora</span>
+          <span>fecha o 1º em <b>02:14</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <h2><span class="star">★</span> Abertos para palpite</h2>
+    <span class="bar"></span>
+    <span class="daytag">Qui · 11 Jun</span>
+  </div>
+
+  <div id="openMatches">
+    <!-- editable cards -->
+    <div class="pcard" data-match>
+      <div class="pc-top">
+        <span class="pc-meta">Grupo C · <b>16:00</b> · MetLife, NY</span>
+        <span class="pill open">Aberto</span>
+      </div>
+      <div class="pc-body">
+        <div class="pteam right"><div><div class="nm">Argentina</div><span class="avg">média 2.1</span></div><span class="crest sm f-arg"></span></div>
+        <div class="score-in"><input class="sc-in" inputmode="numeric" maxlength="2" value="2"><span class="x">×</span><input class="sc-in" inputmode="numeric" maxlength="2" value="1"></div>
+        <div class="pteam"><span class="crest sm f-jpn"></span><div><div class="nm">Japão</div><span class="avg">média 0.9</span></div></div>
+      </div>
+    </div>
+
+    <div class="pcard" data-match>
+      <div class="pc-top">
+        <span class="pc-meta">Grupo D · <b>19:00</b> · Akron, Guadalajara</span>
+        <span class="pill soon">Fecha em 02:14</span>
+      </div>
+      <div class="pc-body">
+        <div class="pteam right"><div><div class="nm">Espanha</div><span class="avg">média 1.8</span></div><span class="crest sm f-esp"></span></div>
+        <div class="score-in"><input class="sc-in" inputmode="numeric" maxlength="2" placeholder="–"><span class="x">×</span><input class="sc-in" inputmode="numeric" maxlength="2" placeholder="–"></div>
+        <div class="pteam"><span class="crest sm f-por"></span><div><div class="nm">Portugal</div><span class="avg">média 1.4</span></div></div>
+      </div>
+    </div>
+
+    <div class="pcard" data-match>
+      <div class="pc-top">
+        <span class="pc-meta">Grupo E · <b>21:00</b> · BBVA, Monterrey</span>
+        <span class="pill open">Aberto</span>
+      </div>
+      <div class="pc-body">
+        <div class="pteam right"><div><div class="nm">Brasil</div><span class="avg">média 2.6</span></div><span class="crest sm f-bra"></span></div>
+        <div class="score-in"><input class="sc-in" inputmode="numeric" maxlength="2" value="3"><span class="x">×</span><input class="sc-in" inputmode="numeric" maxlength="2" value="0"></div>
+        <div class="pteam"><span class="crest sm f-bel"></span><div><div class="nm">Bélgica</div><span class="avg">média 1.1</span></div></div>
+      </div>
+    </div>
+
+    <div class="pcard" data-match>
+      <div class="pc-top">
+        <span class="pc-meta">Grupo F · <b>13:00</b> · BMO Field, Toronto</span>
+        <span class="pill open">Aberto</span>
+      </div>
+      <div class="pc-body">
+        <div class="pteam right"><div><div class="nm">França</div><span class="avg">média 2.0</span></div><span class="crest sm f-fra"></span></div>
+        <div class="score-in"><input class="sc-in" inputmode="numeric" maxlength="2" placeholder="–"><span class="x">×</span><input class="sc-in" inputmode="numeric" maxlength="2" placeholder="–"></div>
+        <div class="pteam"><span class="crest sm f-ned"></span><div><div class="nm">Holanda</div><span class="avg">média 1.6</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h2><span class="star">★</span> Já valeram pontos</h2>
+    <span class="bar"></span>
+    <span class="daytag">Encerrados</span>
+  </div>
+
+  <div class="pcard locked">
+    <div class="pc-top">
+      <span class="pc-meta">Grupo A · Abertura · Azteca</span>
+      <span class="pill closed">Encerrado</span>
+    </div>
+    <div class="pc-body">
+      <div class="pteam right"><div><div class="nm">México</div></div><span class="crest sm f-mex"></span></div>
+      <div class="locked-score"><span class="ls">2</span><span class="x">×</span><span class="ls">1</span></div>
+      <div class="pteam"><span class="crest sm f-cro"></span><div><div class="nm">Croácia</div></div></div>
+    </div>
+    <div class="pc-result"><span>Seu palpite: <b>2 × 1</b> · Resultado: <b>2 × 1</b></span><span class="pts-badge exato">+10 cravado!</span></div>
+  </div>
+
+  <div class="pcard locked">
+    <div class="pc-top">
+      <span class="pc-meta">Grupo B · SoFi, Los Angeles</span>
+      <span class="pill closed">Encerrado</span>
+    </div>
+    <div class="pc-body">
+      <div class="pteam right"><div><div class="nm">Canadá</div></div><span class="crest sm f-can"></span></div>
+      <div class="locked-score"><span class="ls">2</span><span class="x">×</span><span class="ls">0</span></div>
+      <div class="pteam"><span class="crest sm f-mar"></span><div><div class="nm">Marrocos</div></div></div>
+    </div>
+    <div class="pc-result"><span>Seu palpite: <b>1 × 0</b> · Resultado: <b>2 × 0</b></span><span class="pts-badge parcial">+5 vencedor</span></div>
+  </div>
+
+  <div class="pcard locked">
+    <div class="pc-top">
+      <span class="pc-meta">Grupo B · BC Place, Vancouver</span>
+      <span class="pill closed">Encerrado</span>
+    </div>
+    <div class="pc-body">
+      <div class="pteam right"><div><div class="nm">Bélgica</div></div><span class="crest sm f-bel"></span></div>
+      <div class="locked-score"><span class="ls">1</span><span class="x">×</span><span class="ls">3</span></div>
+      <div class="pteam"><span class="crest sm f-mar"></span><div><div class="nm">Marrocos</div></div></div>
+    </div>
+    <div class="pc-result"><span>Seu palpite: <b>2 × 1</b> · Resultado: <b>1 × 3</b></span><span class="pts-badge zero">0 pts</span></div>
+  </div>
+
+  <!-- save bar -->
+  <div class="savebar">
+    <span class="info"><b id="filledNow">3</b> palpites preenchidos nesta rodada</span>
+    <button class="btn gold" id="saveBtn">Salvar palpites</button>
+  </div>
+
+  <footer class="almanac-foot">
+    <div class="legend">
+      <span><b>10 pts</b> placar exato</span>
+      <span><b>5 pts</b> vencedor / empate</span>
+      <span style="color:var(--ink-faint)">editável até o apito inicial</span>
+    </div>
+    <div class="mark">Bolão da Copa · MMXXVI</div>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast">Palpites salvos! ✓</div>
+
+<script>
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn'), saved = null;
+    try { saved = localStorage.getItem('bolao-theme'); } catch (e) {}
+    if (saved) root.setAttribute('data-theme', saved);
+    function sync() { btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀\uFE0E' : '☾\uFE0E'; }
+    sync();
+    btn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('bolao-theme', next); } catch (e) {}
+      sync();
+    });
+
+    // digit-only inputs + live counters
+    var open = document.getElementById('openMatches');
+    var inputs = open.querySelectorAll('.sc-in');
+    function recount() {
+      var filled = 0;
+      open.querySelectorAll('[data-match]').forEach(function (m) {
+        var i = m.querySelectorAll('.sc-in');
+        if (i[0].value !== '' && i[1].value !== '') filled++;
+      });
+      document.getElementById('filledNow').textContent = filled;
+      var total = 14 + (filled - 2 < 0 ? 0 : 0); // baseline display
+      document.getElementById('progNum').textContent = 14;
+    }
+    inputs.forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 2);
+        recount();
+      });
+    });
+
+    var toast = document.getElementById('toast');
+    document.getElementById('saveBtn').addEventListener('click', function () {
+      var filled = document.getElementById('filledNow').textContent;
+      toast.textContent = filled + ' palpite(s) salvo(s)! ✓';
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 2200);
+    });
+    recount();
+  })();
+</script>
+</body>
+</html>

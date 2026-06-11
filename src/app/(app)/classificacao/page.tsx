@@ -198,6 +198,7 @@ export default async function ClassificacaoPage() {
               return (
                 <div className={`bk-col${isFinal ? " final" : ""}`} key={stage}>
                   <h3>{stageLabel(stage)}</h3>
+                  <div className="bk-matches">
                   {byStage.get(stage)!.map((m) => {
                     const decided =
                       m.homeScore !== null && m.awayScore !== null;
@@ -228,6 +229,7 @@ export default async function ClassificacaoPage() {
                       </Link>
                     );
                   })}
+                  </div>
                 </div>
               );
             })}
