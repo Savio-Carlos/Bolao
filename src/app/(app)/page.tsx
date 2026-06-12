@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { dayKey, formatDay, formatTime, isLive, statusLabel } from "@/lib/format";
+import {
+  dayKey,
+  formatDay,
+  formatTime,
+  inLiveWindow,
+  isLive,
+  statusLabel,
+} from "@/lib/format";
 import { groupLabel, stageLabel, isOpenForPrediction } from "@/lib/football/types";
 import { getCurrentUser } from "@/lib/session";
 import { computeRanking } from "@/lib/ranking";
@@ -253,7 +260,9 @@ export default async function CronogramaPage() {
 
   // Próximo jogo a fechar (matches já vem em ordem cronológica).
   const nextMatch = matches.find((m) => isOpenForPrediction(m)) ?? null;
-  const hasLive = matches.some((m) => isLive(m.status));
+  // Auto-refresh enquanto houver jogo ao vivo OU na janela em que deveria estar
+  // rolando — assim a home puxa sozinha o placar/encerramento do sync mais novo.
+  const hasLive = matches.some((m) => isLive(m.status) || inLiveWindow(m));
 
   if (matches.length === 0) {
     return (

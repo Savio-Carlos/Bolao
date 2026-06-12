@@ -7,7 +7,7 @@ name: Sincronizar jogos do bolão
 
 on:
   schedule:
-    - cron: "*/10 * * * *" # a cada 10 minutos (UTC)
+    - cron: "*/5 * * * *" # a cada 5 minutos (UTC) — mínimo do GitHub Actions
   workflow_dispatch: {} # permite rodar manualmente pelo GitHub
 
 jobs:
