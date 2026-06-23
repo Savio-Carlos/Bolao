@@ -302,7 +302,12 @@ export default async function CronogramaPage() {
       />
       {[...days.entries()].map(([key, dayMatches]) => {
         const liveOnes = dayMatches.filter((m) => isLive(m.status));
-        const rest = dayMatches.filter((m) => !isLive(m.status));
+        const notLive = dayMatches.filter((m) => !isLive(m.status));
+        // Não-ao-vivo: agendados primeiro (em ordem), encerrados empurrados pro fim.
+        const rest = [
+          ...notLive.filter((m) => m.status !== "FINISHED"),
+          ...notLive.filter((m) => m.status === "FINISHED"),
+        ];
         return (
           <section key={key}>
             <div className="section-head">
