@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   if (!(await tournamentDeadlineOpen())) {
     return NextResponse.json(
-      { error: "Os palpites do torneio já estão fechados (a Copa começou)." },
+      { error: "Os palpites do torneio já estão fechados (o mata-mata começou)." },
       { status: 403 },
     );
   }

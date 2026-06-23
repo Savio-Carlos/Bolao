@@ -23,11 +23,13 @@ export default function TournamentEditor({
   initial,
   teams,
   open,
+  deadlineLabel,
 }: {
   categories: CategoryMeta[];
   initial: EditorValues;
   teams: string[];
   open: boolean;
+  deadlineLabel: string | null;
 }) {
   const router = useRouter();
   const [values, setValues] = useState<EditorValues>(initial);
@@ -71,7 +73,7 @@ export default function TournamentEditor({
       <div className="pcard locked">
         <div className="pc-top">
           <span className="pc-meta">
-            🔒 Os palpites do torneio estão fechados — a Copa já começou
+            🔒 Os palpites do torneio estão fechados — o mata-mata já começou
           </span>
           <span className="pill closed">Encerrado</span>
         </div>
@@ -110,7 +112,8 @@ export default function TournamentEditor({
   return (
     <div>
       <div className="deadline">
-        <span className="dot" /> A cartela fecha <b>no apito do primeiro jogo</b>{" "}
+        <span className="dot" /> A cartela fecha{" "}
+        <b>no início do mata-mata{deadlineLabel ? ` — ${deadlineLabel}` : ""}</b>{" "}
         — depois, é torcer.
       </div>
 

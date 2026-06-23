@@ -97,10 +97,18 @@ export function gradeTournamentBet(
   return total;
 }
 
-// Os palpites do torneio travam no apito inicial do primeiro jogo da Copa.
+// Os palpites do torneio travam no início do mata-mata (primeiro jogo fora da
+// fase de grupos). Assim a galera tem a fase de grupos inteira pra preencher.
+export async function tournamentDeadline(): Promise<Date | null> {
+  const agg = await prisma.match.aggregate({
+    where: { stage: { not: "GROUP_STAGE" } },
+    _min: { kickoff: true },
+  });
+  return agg._min.kickoff ?? null;
+}
+
 export async function tournamentDeadlineOpen(): Promise<boolean> {
-  const agg = await prisma.match.aggregate({ _min: { kickoff: true } });
-  const first = agg._min.kickoff;
-  if (!first) return true; // ainda não há jogos carregados
-  return Date.now() < first.getTime();
+  const deadline = await tournamentDeadline();
+  if (!deadline) return true; // mata-mata ainda não carregado
+  return Date.now() < deadline.getTime();
 }

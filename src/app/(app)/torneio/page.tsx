@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { formatDay, formatTime } from "@/lib/format";
 import {
   SIMPLE_CATEGORIES,
   UPSET,
   normalize,
+  tournamentDeadline,
   tournamentDeadlineOpen,
   upsetStageLabel,
 } from "@/lib/tournament";
@@ -21,18 +23,24 @@ export default async function TorneioPage() {
   const user = await getCurrentUser();
   if (!user) return null; // layout já redireciona
 
-  const [myBet, allBets, result, groupMatches, open] = await Promise.all([
-    prisma.tournamentBet.findUnique({ where: { userId: user.id } }),
-    prisma.tournamentBet.findMany({
-      include: { user: { select: { username: true } } },
-    }),
-    prisma.tournamentResult.findUnique({ where: { id: 1 } }),
-    prisma.match.findMany({
-      where: { stage: "GROUP_STAGE" },
-      select: { homeTeam: true, awayTeam: true },
-    }),
-    tournamentDeadlineOpen(),
-  ]);
+  const [myBet, allBets, result, groupMatches, deadline, open] =
+    await Promise.all([
+      prisma.tournamentBet.findUnique({ where: { userId: user.id } }),
+      prisma.tournamentBet.findMany({
+        include: { user: { select: { username: true } } },
+      }),
+      prisma.tournamentResult.findUnique({ where: { id: 1 } }),
+      prisma.match.findMany({
+        where: { stage: "GROUP_STAGE" },
+        select: { homeTeam: true, awayTeam: true },
+      }),
+      tournamentDeadline(),
+      tournamentDeadlineOpen(),
+    ]);
+
+  const deadlineLabel = deadline
+    ? `${formatDay(deadline)} · ${formatTime(deadline)}`
+    : null;
 
   const teams = [
     ...new Set(
@@ -62,7 +70,11 @@ export default async function TorneioPage() {
         </h1>
         <p className="sub">
           As apostas que valem mais pontos no bolão. Editáveis{" "}
-          <b>até o apito do primeiro jogo</b> — depois, é torcer.{" "}
+          <b>
+            até o início do mata-mata
+            {deadlineLabel ? ` (${deadlineLabel})` : ""}
+          </b>{" "}
+          — depois, é torcer.{" "}
           {SIMPLE_CATEGORIES.map((c) => `${c.label} ${c.points}`).join(" · ")} ·
           Maior zebra {UPSET.totalPoints} ({UPSET.teamPoints} seleção +{" "}
           {UPSET.stagePoints} fase).
@@ -75,6 +87,7 @@ export default async function TorneioPage() {
         initial={initial}
         teams={teams}
         open={open}
+        deadlineLabel={deadlineLabel}
       />
 
       <div className="section-head">
