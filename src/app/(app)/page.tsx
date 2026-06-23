@@ -288,6 +288,18 @@ export default async function CronogramaPage() {
     days.get(key)!.push(m);
   }
 
+  // Ordena os dias: primeiro os que ainda têm jogo ao vivo/por jogar (em ordem
+  // crescente — o dia de hoje no topo), depois os dias 100% encerrados, do mais
+  // recente pro mais antigo. Assim os jogos do dia ficam logo no início.
+  const dayEntries = [...days.entries()];
+  const activeDays = dayEntries.filter(([, ms]) =>
+    ms.some((m) => m.status !== "FINISHED"),
+  );
+  const finishedDays = dayEntries
+    .filter(([, ms]) => ms.every((m) => m.status === "FINISHED"))
+    .reverse();
+  const orderedDays = [...activeDays, ...finishedDays];
+
   return (
     <>
       {hasLive && <LiveRefresh />}
@@ -300,7 +312,7 @@ export default async function CronogramaPage() {
         partial={meRow?.partial ?? 0}
         nextMatch={nextMatch}
       />
-      {[...days.entries()].map(([key, dayMatches]) => {
+      {orderedDays.map(([key, dayMatches]) => {
         const liveOnes = dayMatches.filter((m) => isLive(m.status));
         const notLive = dayMatches.filter((m) => !isLive(m.status));
         // Não-ao-vivo: agendados primeiro (em ordem), encerrados empurrados pro fim.
