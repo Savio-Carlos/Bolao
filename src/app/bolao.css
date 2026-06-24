@@ -482,6 +482,25 @@ a { color: inherit; text-decoration: none; }
 svg.chart { width: 100%; height: auto; display: block; }
 svg.chart text { font-family: var(--ff-mono); }
 
+/* Composição dos pontos (barras empilhadas) */
+.sbars { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
+.sbar-row { display: grid; grid-template-columns: 92px 1fr 34px; align-items: center; gap: 10px; }
+.sbar-name { font-family: var(--ff-sans); font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbar-row.me .sbar-name { color: var(--green); }
+.sbar-track { display: flex; height: 16px; background: var(--line-soft); border-radius: 3px; overflow: hidden; }
+.sbar-seg { height: 100%; }
+.sbar-seg.exact { background: var(--gold); }
+.sbar-seg.partial { background: var(--green); }
+.sbar-total { font-family: var(--ff-serif); font-size: 16px; color: var(--green); text-align: right; }
+
+/* Mapa de calor dos placares */
+.heat-grid { display: grid; gap: 3px; }
+.heat-corner { font-family: var(--ff-mono); font-size: 9px; color: var(--ink-faint); display: grid; place-items: center; }
+.heat-head { font-family: var(--ff-mono); font-size: 11px; font-weight: 700; color: var(--ink-soft); display: grid; place-items: center; }
+.heat-cell { aspect-ratio: 1; display: grid; place-items: center; font-family: var(--ff-mono); font-size: 12px; color: var(--ink); border: 1px solid var(--line-soft); border-radius: 3px; }
+.heat-cell.top { outline: 2px solid var(--gold); outline-offset: -2px; font-weight: 800; }
+.heat-legend { font-family: var(--ff-mono); font-size: 11px; color: var(--ink-soft); margin: 9px 0 0; }
+
 .day-table-wrap { border: 1.5px solid var(--ink); border-radius: 3px; box-shadow: var(--card-shadow); background: var(--paper-2); overflow: hidden; overflow-x: auto; }
 .day-table { width: 100%; border-collapse: collapse; min-width: 560px; }
 .day-table thead th { font-family: var(--ff-sans); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 800; color: var(--paper-2); background: var(--green-deep); padding: 9px 10px; text-align: center; white-space: nowrap; }

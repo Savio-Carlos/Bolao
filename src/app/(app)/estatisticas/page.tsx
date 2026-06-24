@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { dayKey } from "@/lib/format";
 import { stageLabel, stageRank } from "@/lib/football/types";
 
 export const dynamic = "force-dynamic";
 
-// Mínimo de palpites encerrados para concorrer a "pé frio" (evita amostra de 1 jogo).
-const MIN_PE_FRIO = 5;
+// Mínimo de palpites encerrados para concorrer a stats de média/taxa (evita
+// que uma amostra de 1 jogo distorça aproveitamento, média de gols, etc.).
+const MIN_SAMPLE = 5;
 
 interface UserStat {
   username: string;
@@ -16,6 +18,13 @@ interface UserStat {
   bestMiss: number; // maior sequência de erros
   curHit: number;
   curMiss: number;
+  goalsSum: number; // soma de gols palpitados (mandante + visitante)
+  draws: number; // palpites de empate
+  errSum: number; // soma do |erro| de gols vs placar real
+  errN: number; // palpites com placar real disponível
+  leadMs: number; // soma da antecedência (kickoff - createdAt)
+  leadN: number;
+  bestDay: number; // mais pontos somados num único dia
 }
 
 function StatCard({
@@ -63,7 +72,9 @@ export default async function EstatisticasPage() {
   const preds = await prisma.prediction.findMany({
     where: { points: { not: null } },
     include: {
-      match: { select: { stage: true } },
+      match: {
+        select: { stage: true, kickoff: true, homeScore: true, awayScore: true },
+      },
       user: { select: { id: true, username: true } },
     },
     orderBy: { match: { kickoff: "asc" } },
@@ -96,6 +107,10 @@ export default async function EstatisticasPage() {
   const byUser = new Map<number, UserStat>();
   // Pontos por fase: stage -> (userId -> pontos).
   const byStage = new Map<string, Map<number, number>>();
+  // Pontos por dia: userId -> (dia -> pontos), para o recorde de "dia inspirado".
+  const dayPts = new Map<number, Map<string, number>>();
+  // Placar mais palpitado por todo mundo: "h-a" -> quantidade.
+  const scoreCount = new Map<string, number>();
 
   for (const p of preds) {
     let s = byUser.get(p.user.id);
@@ -109,6 +124,13 @@ export default async function EstatisticasPage() {
         bestMiss: 0,
         curHit: 0,
         curMiss: 0,
+        goalsSum: 0,
+        draws: 0,
+        errSum: 0,
+        errN: 0,
+        leadMs: 0,
+        leadN: 0,
+        bestDay: 0,
       };
       byUser.set(p.user.id, s);
     }
@@ -127,42 +149,107 @@ export default async function EstatisticasPage() {
       s.bestMiss = Math.max(s.bestMiss, s.curMiss);
     }
 
+    // Estilo de palpite e precisão.
+    s.goalsSum += p.homeScore + p.awayScore;
+    if (p.homeScore === p.awayScore) s.draws++;
+    if (p.match.homeScore !== null && p.match.awayScore !== null) {
+      s.errSum +=
+        Math.abs(p.homeScore - p.match.homeScore) +
+        Math.abs(p.awayScore - p.match.awayScore);
+      s.errN++;
+    }
+    const lead = p.match.kickoff.getTime() - p.createdAt.getTime();
+    if (lead > 0) {
+      s.leadMs += lead;
+      s.leadN++;
+    }
+
+    // Placar mais palpitado (coletivo).
+    const key = `${p.homeScore}-${p.awayScore}`;
+    scoreCount.set(key, (scoreCount.get(key) ?? 0) + 1);
+
+    // Pontos por dia (para "dia inspirado").
+    const day = dayKey(p.match.kickoff);
+    if (!dayPts.has(p.user.id)) dayPts.set(p.user.id, new Map());
+    const dm = dayPts.get(p.user.id)!;
+    dm.set(day, (dm.get(day) ?? 0) + pts);
+
     const stage = p.match.stage;
     if (!byStage.has(stage)) byStage.set(stage, new Map());
     const sm = byStage.get(stage)!;
     sm.set(p.user.id, (sm.get(p.user.id) ?? 0) + pts);
   }
 
+  // Melhor dia de cada um (maior soma de pontos num único dia).
+  for (const [userId, dm] of dayPts) {
+    byUser.get(userId)!.bestDay = Math.max(0, ...dm.values());
+  }
+
   const stats = [...byUser.values()];
 
-  // Helpers de "campeão" de cada estatística (lida com empates).
-  function leadersBy(
+  // Helper de "campeão"/"lanterna" de cada estatística (lida com empates).
+  function extremeBy(
     pick: (s: UserStat) => number,
+    dir: "max" | "min" = "max",
     eligible: (s: UserStat) => boolean = () => true,
   ): { value: number; names: string[] } {
     const pool = stats.filter(eligible);
     if (pool.length === 0) return { value: 0, names: [] };
-    const value = Math.max(...pool.map(pick));
+    const vals = pool.map(pick);
+    const value = dir === "max" ? Math.max(...vals) : Math.min(...vals);
     const names = pool.filter((s) => pick(s) === value).map((s) => s.username);
     return { value, names };
   }
 
-  const bestHit = leadersBy((s) => s.bestHit);
-  const bestMiss = leadersBy((s) => s.bestMiss);
-  const mostExact = leadersBy((s) => s.exact);
+  const enoughSample = (s: UserStat) => s.total >= MIN_SAMPLE;
+
+  const bestHit = extremeBy((s) => s.bestHit);
+  const bestMiss = extremeBy((s) => s.bestMiss);
+  const mostExact = extremeBy((s) => s.exact);
+  const bestDay = extremeBy((s) => s.bestDay);
+  const mostDraws = extremeBy((s) => s.draws);
+  const hotRate = extremeBy((s) => s.hits / s.total, "max", enoughSample);
+  const goleador = extremeBy((s) => s.goalsSum / s.total, "max", enoughSample);
+  const chegaJunto = extremeBy(
+    (s) => s.errSum / s.errN,
+    "min",
+    (s) => s.errN >= MIN_SAMPLE,
+  );
+  const madrugador = extremeBy(
+    (s) => s.leadMs / s.leadN,
+    "max",
+    (s) => s.leadN >= MIN_SAMPLE,
+  );
 
   // Pé frio: menor aproveitamento entre quem tem amostra suficiente.
-  const eligiblePeFrio = stats.filter((s) => s.total >= MIN_PE_FRIO);
-  let peFrio: { name: string; rate: number } | null = null;
-  if (eligiblePeFrio.length > 0) {
-    const worst = eligiblePeFrio.reduce((a, b) =>
-      a.hits / a.total <= b.hits / b.total ? a : b,
-    );
-    peFrio = { name: worst.username, rate: worst.hits / worst.total };
+  const peFrioRes = extremeBy((s) => s.hits / s.total, "min", enoughSample);
+  const peFrio =
+    peFrioRes.names.length > 0
+      ? { name: peFrioRes.names.join(", "), rate: peFrioRes.value }
+      : null;
+
+  // Placar mais palpitado por todo mundo.
+  let popularScore: { label: string; count: number } | null = null;
+  for (const [k, n] of scoreCount) {
+    if (!popularScore || n > popularScore.count) {
+      const [h, a] = k.split("-");
+      popularScore = { label: `${h} × ${a}`, count: n };
+    }
   }
 
   const fmtNames = (names: string[]) =>
     names.length === 0 ? "—" : names.join(", ");
+
+  const fmtDec = (n: number) => n.toFixed(1).replace(".", ",");
+
+  // Antecedência média -> texto curto ("18h" ou "3,2 dias").
+  const fmtLead = (ms: number): { value: string; unit: string } => {
+    const hours = ms / 3_600_000;
+    return hours >= 24
+      ? { value: fmtDec(hours / 24), unit: "dias" }
+      : { value: String(Math.round(hours)), unit: "h" };
+  };
+  const lead = madrugador.names.length > 0 ? fmtLead(madrugador.value) : null;
 
   const stagesPresent = [...byStage.keys()].sort(
     (a, b) => stageRank(a) - stageRank(b),
@@ -219,7 +306,87 @@ export default async function EstatisticasPage() {
           value={peFrio ? `${Math.round(peFrio.rate * 100)}` : "—"}
           unit={peFrio ? "%" : undefined}
           who={
-            peFrio ? peFrio.name : `exige ${MIN_PE_FRIO}+ palpites encerrados`
+            peFrio ? peFrio.name : `exige ${MIN_SAMPLE}+ palpites encerrados`
+          }
+        />
+        <StatCard
+          emoji="🌡️"
+          variant="hot"
+          corner="MIRA"
+          title="Mais quente · melhor aproveitamento"
+          value={
+            hotRate.names.length > 0
+              ? `${Math.round(hotRate.value * 100)}`
+              : "—"
+          }
+          unit={hotRate.names.length > 0 ? "%" : undefined}
+          who={
+            hotRate.names.length > 0
+              ? fmtNames(hotRate.names)
+              : `exige ${MIN_SAMPLE}+ palpites encerrados`
+          }
+        />
+        <StatCard
+          emoji="📅"
+          variant="hot"
+          corner="DIA CHEIO"
+          title="Dia mais inspirado"
+          value={bestDay.value > 0 ? String(bestDay.value) : "—"}
+          unit={bestDay.value > 0 ? "pts num dia" : undefined}
+          who={bestDay.value > 0 ? fmtNames(bestDay.names) : undefined}
+        />
+        <StatCard
+          emoji="⚽"
+          variant="hot"
+          corner="ARTILHARIA"
+          title="Goleador · mais gols por palpite"
+          value={goleador.names.length > 0 ? fmtDec(goleador.value) : "—"}
+          unit={goleador.names.length > 0 ? "gols/jogo" : undefined}
+          who={goleador.names.length > 0 ? fmtNames(goleador.names) : undefined}
+        />
+        <StatCard
+          emoji="🤝"
+          variant="hot"
+          corner="X+X"
+          title="O empatador · mais palpites de empate"
+          value={mostDraws.value > 0 ? String(mostDraws.value) : "—"}
+          unit={mostDraws.value > 0 ? "empates" : undefined}
+          who={mostDraws.value > 0 ? fmtNames(mostDraws.names) : undefined}
+        />
+        <StatCard
+          emoji="📏"
+          variant="hot"
+          corner="QUASE LÁ"
+          title="Chega junto · menor erro de placar"
+          value={chegaJunto.names.length > 0 ? fmtDec(chegaJunto.value) : "—"}
+          unit={chegaJunto.names.length > 0 ? "gols de erro" : undefined}
+          who={
+            chegaJunto.names.length > 0
+              ? fmtNames(chegaJunto.names)
+              : `exige ${MIN_SAMPLE}+ palpites encerrados`
+          }
+        />
+        <StatCard
+          emoji="⏰"
+          variant="hot"
+          corner="MADRUGADOR"
+          title="Quem palpita com mais antecedência"
+          value={lead ? lead.value : "—"}
+          unit={lead ? lead.unit : undefined}
+          who={
+            lead
+              ? fmtNames(madrugador.names)
+              : `exige ${MIN_SAMPLE}+ palpites encerrados`
+          }
+        />
+        <StatCard
+          emoji="🗳️"
+          variant="hot"
+          corner="DO POVO"
+          title="Placar mais palpitado por todos"
+          value={popularScore ? popularScore.label : "—"}
+          who={
+            popularScore ? `${popularScore.count} palpites` : undefined
           }
         />
       </section>
