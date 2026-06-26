@@ -41,13 +41,33 @@ function emptyRow(team: string): TeamRow {
 }
 
 // Critérios de desempate (simplificados): pontos → saldo → gols pró → nome.
-function compareRows(a: TeamRow, b: TeamRow): number {
+export function compareRows(a: TeamRow, b: TeamRow): number {
   return (
     b.points - a.points ||
     b.gd - a.gd ||
     b.gf - a.gf ||
     a.team.localeCompare(b.team, "pt-BR")
   );
+}
+
+export interface ThirdPlaceRow extends TeamRow {
+  group: string; // "GROUP_A"
+  qualifies: boolean; // entre os 8 melhores terceiros
+}
+
+// Ranqueia os terceiros colocados de todos os grupos entre si. Os 8 melhores
+// avançam ao mata-mata. Mesmos critérios de desempate dos grupos.
+export function computeThirdPlaceRanking(
+  standings: GroupStanding[],
+): ThirdPlaceRow[] {
+  const thirds = standings
+    .filter((s) => s.rows.length >= 3)
+    .map((s) => ({ ...s.rows[2], group: s.group, qualifies: false }));
+  thirds.sort(compareRows);
+  thirds.forEach((t, i) => {
+    t.qualifies = i < 8;
+  });
+  return thirds;
 }
 
 export function computeGroupStandings(matches: MatchLike[]): GroupStanding[] {

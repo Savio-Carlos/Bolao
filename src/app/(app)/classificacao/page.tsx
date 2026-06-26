@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { isLive, statusLabel } from "@/lib/format";
 import { stageLabel, stageRank } from "@/lib/football/types";
-import { computeGroupStandings } from "@/lib/standings";
+import { computeGroupStandings, computeThirdPlaceRanking } from "@/lib/standings";
 import { Crest } from "@/components/Crest";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +56,7 @@ export default async function ClassificacaoPage() {
   }
 
   const standings = computeGroupStandings(matches);
+  const thirds = computeThirdPlaceRanking(standings);
 
   // Escudos por nome de seleção (a partir dos jogos), para enfeitar as tabelas.
   const crestByTeam = new Map<string, string>();
@@ -181,6 +182,60 @@ export default async function ClassificacaoPage() {
           </p>
         </div>
       </section>
+
+      {thirds.length > 0 && (
+        <>
+          <div className="section-head">
+            <h2>
+              <span className="star">★</span> Melhores terceiros
+            </h2>
+            <span className="bar" />
+            <span className="daytag">8 vagas</span>
+          </div>
+          <p
+            className="legend"
+            style={{ margin: "0 0 12px", color: "var(--ink-faint)" }}
+          >
+            Os <b>8 melhores 3ºs colocados</b> entre os 12 grupos avançam (em
+            verde). Parcial — atualiza conforme os jogos terminam.
+          </p>
+          <div className="alm-table-wrap">
+            <table className="alm-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th className="l">Seleção</th>
+                  <th>Grupo</th>
+                  <th>P</th>
+                  <th>J</th>
+                  <th>SG</th>
+                  <th>GP</th>
+                  <th className="r">Vaga</th>
+                </tr>
+              </thead>
+              <tbody>
+                {thirds.map((t, i) => (
+                  <tr key={t.team} className={t.qualifies ? "q-in" : "q-out"}>
+                    <td className="num">{i + 1}</td>
+                    <td className="l">
+                      <span className="tm-in">
+                        <Crest src={crestByTeam.get(t.team) ?? null} size="xs" />
+                        <span className="name">{t.team}</span>
+                      </span>
+                    </td>
+                    <td>{t.group.replace("GROUP_", "")}</td>
+                    <td className="num">{t.points}</td>
+                    <td className="num">{t.played}</td>
+                    <td className="num">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+                    <td className="num">{t.gf}</td>
+                    <td className="r">{t.qualifies ? "✓ avança" : "fora"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {stages.length > 0 && (
         <>
