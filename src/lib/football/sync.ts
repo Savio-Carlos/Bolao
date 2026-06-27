@@ -15,36 +15,43 @@ export interface SyncResult {
 export async function syncMatches(): Promise<SyncResult> {
   const matches = await fetchMatches();
 
+  // Estado atual no banco para NÃO regredir dados já conhecidos: a football-data
+  // grátis às vezes devolve o chaveamento com os times zerados (cache instável),
+  // e um sync que pegasse essa resposta apagaria times/placar já confirmados.
+  const existing = await prisma.match.findMany({
+    select: {
+      externalId: true,
+      homeTeam: true,
+      awayTeam: true,
+      homeCrest: true,
+      awayCrest: true,
+      homeScore: true,
+      awayScore: true,
+      winner: true,
+    },
+  });
+  const prev = new Map(existing.map((e) => [e.externalId, e]));
+
   for (const m of matches) {
+    const ex = prev.get(m.externalId);
+    // Valor novo vence quando existe; se vier nulo, mantém o já conhecido.
+    const data = {
+      stage: m.stage,
+      group: m.group,
+      homeTeam: m.homeTeam ?? ex?.homeTeam ?? null,
+      awayTeam: m.awayTeam ?? ex?.awayTeam ?? null,
+      homeCrest: m.homeCrest ?? ex?.homeCrest ?? null,
+      awayCrest: m.awayCrest ?? ex?.awayCrest ?? null,
+      kickoff: m.kickoff,
+      status: m.status,
+      homeScore: m.homeScore ?? ex?.homeScore ?? null,
+      awayScore: m.awayScore ?? ex?.awayScore ?? null,
+      winner: m.winner ?? ex?.winner ?? null,
+    };
     await prisma.match.upsert({
       where: { externalId: m.externalId },
-      create: {
-        externalId: m.externalId,
-        stage: m.stage,
-        group: m.group,
-        homeTeam: m.homeTeam,
-        awayTeam: m.awayTeam,
-        homeCrest: m.homeCrest,
-        awayCrest: m.awayCrest,
-        kickoff: m.kickoff,
-        status: m.status,
-        homeScore: m.homeScore,
-        awayScore: m.awayScore,
-        winner: m.winner,
-      },
-      update: {
-        stage: m.stage,
-        group: m.group,
-        homeTeam: m.homeTeam,
-        awayTeam: m.awayTeam,
-        homeCrest: m.homeCrest,
-        awayCrest: m.awayCrest,
-        kickoff: m.kickoff,
-        status: m.status,
-        homeScore: m.homeScore,
-        awayScore: m.awayScore,
-        winner: m.winner,
-      },
+      create: { externalId: m.externalId, ...data },
+      update: data,
     });
   }
 
