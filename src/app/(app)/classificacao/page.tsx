@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { isLive, statusLabel } from "@/lib/format";
-import { stageLabel, stageRank } from "@/lib/football/types";
+import { dayKey, formatTime, isLive } from "@/lib/format";
+import { stageLabel } from "@/lib/football/types";
 import { computeGroupStandings, computeThirdPlaceRanking } from "@/lib/standings";
 import { Crest } from "@/components/Crest";
 
@@ -9,22 +9,83 @@ export const dynamic = "force-dynamic";
 
 type Match = Awaited<ReturnType<typeof prisma.match.findMany>>[number];
 
-function BracketRow({
+// Rótulos curtos das fases, p/ caber nas colunas estreitas do chaveamento.
+const SHORT_STAGE: Record<string, string> = {
+  LAST_32: "16-avos",
+  LAST_16: "Oitavas",
+  QUARTER_FINALS: "Quartas",
+  SEMI_FINALS: "Semifinais",
+  FINAL: "Final",
+  THIRD_PLACE: "3º lugar",
+};
+
+// "2026-06-28" + horário -> "28/06 · 16:00" (fuso de Brasília via format.ts).
+function fmtShort(d: Date): string {
+  const [, mm, dd] = dayKey(d).split("-");
+  return `${dd}/${mm} · ${formatTime(d)}`;
+}
+
+function BkTeam({
   name,
   crest,
   score,
-  outcome,
+  win,
+  lose,
 }: {
   name: string | null;
   crest: string | null;
   score: number | null;
-  outcome: "win" | "lose" | "";
+  win: boolean;
+  lose: boolean;
 }) {
   return (
-    <div className={`row${outcome ? ` ${outcome}` : ""}`}>
+    <div className={`bk2-row${win ? " win" : lose ? " lose" : ""}`}>
       <Crest src={crest} size="xs" />
-      <span className="nm">{name ?? "A definir"}</span>
-      <span className="sc">{score ?? "—"}</span>
+      <span className="bk2-nm">{name ?? "A definir"}</span>
+      <span className="bk2-sc">{score ?? ""}</span>
+    </div>
+  );
+}
+
+function BracketCard({ m, champ = false }: { m: Match; champ?: boolean }) {
+  const decided = m.homeScore !== null && m.awayScore !== null;
+  const homeWin = decided && m.homeScore! > m.awayScore!;
+  const awayWin = decided && m.awayScore! > m.homeScore!;
+  return (
+    <Link href={`/jogos/${m.id}`} className={`bk2${champ ? " champ" : ""}`}>
+      <div className="bk2-time">
+        <span>{fmtShort(m.kickoff)}</span>
+        {isLive(m.status) && <span className="bk2-live">● ao vivo</span>}
+      </div>
+      <BkTeam
+        name={m.homeTeam}
+        crest={m.homeCrest}
+        score={m.homeScore}
+        win={homeWin}
+        lose={awayWin}
+      />
+      <BkTeam
+        name={m.awayTeam}
+        crest={m.awayCrest}
+        score={m.awayScore}
+        win={awayWin}
+        lose={homeWin}
+      />
+    </Link>
+  );
+}
+
+// Uma coluna (fase) de um dos lados do chaveamento.
+function BracketCol({ stage, matches }: { stage: string; matches: Match[] }) {
+  if (matches.length === 0) return null;
+  return (
+    <div className="bk2-col">
+      <span className="bk2-head">{SHORT_STAGE[stage] ?? stageLabel(stage)}</span>
+      <div className="bk2-body">
+        {matches.map((m) => (
+          <BracketCard key={m.id} m={m} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -65,16 +126,25 @@ export default async function ClassificacaoPage() {
     if (m.awayTeam && m.awayCrest) crestByTeam.set(m.awayTeam, m.awayCrest);
   }
 
-  // Mata-mata agrupado por fase, em ordem.
+  // Mata-mata agrupado por fase (cada lista já vem em ordem de horário).
   const knockout = matches.filter((m) => m.stage !== "GROUP_STAGE");
-  const stages = [...new Set(knockout.map((m) => m.stage))].sort(
-    (a, b) => stageRank(a) - stageRank(b),
-  );
   const byStage = new Map<string, Match[]>();
   for (const m of knockout) {
     if (!byStage.has(m.stage)) byStage.set(m.stage, []);
     byStage.get(m.stage)!.push(m);
   }
+  const ms = (s: string) => byStage.get(s) ?? [];
+  // Divide cada fase em dois lados, p/ o chaveamento espelhado com a final no meio.
+  const half = (a: Match[]): [Match[], Match[]] => {
+    const h = Math.ceil(a.length / 2);
+    return [a.slice(0, h), a.slice(h)];
+  };
+  const [r32L, r32R] = half(ms("LAST_32"));
+  const [r16L, r16R] = half(ms("LAST_16"));
+  const [qfL, qfR] = half(ms("QUARTER_FINALS"));
+  const [sfL, sfR] = half(ms("SEMI_FINALS"));
+  const finalM = ms("FINAL")[0] ?? null;
+  const third = ms("THIRD_PLACE")[0] ?? null;
 
   return (
     <>
@@ -237,7 +307,7 @@ export default async function ClassificacaoPage() {
         </>
       )}
 
-      {stages.length > 0 && (
+      {knockout.length > 0 && (
         <>
           <div className="section-head">
             <h2>
@@ -247,48 +317,41 @@ export default async function ClassificacaoPage() {
             <span className="daytag">Rumo ao título</span>
           </div>
 
-          <section className="bracket">
-            {stages.map((stage) => {
-              const isFinal = stage === "FINAL";
-              return (
-                <div className={`bk-col${isFinal ? " final" : ""}`} key={stage}>
-                  <h3>{stageLabel(stage)}</h3>
-                  <div className="bk-matches">
-                  {byStage.get(stage)!.map((m) => {
-                    const decided =
-                      m.homeScore !== null && m.awayScore !== null;
-                    const homeWin = decided && m.homeScore! > m.awayScore!;
-                    const awayWin = decided && m.awayScore! > m.homeScore!;
-                    return (
-                      <Link
-                        key={m.id}
-                        href={`/jogos/${m.id}`}
-                        className={`bk${isFinal && decided ? " champ" : ""}`}
-                      >
-                        <BracketRow
-                          name={m.homeTeam}
-                          crest={m.homeCrest}
-                          score={m.homeScore}
-                          outcome={homeWin ? "win" : awayWin ? "lose" : ""}
-                        />
-                        <div className="div" />
-                        <BracketRow
-                          name={m.awayTeam}
-                          crest={m.awayCrest}
-                          score={m.awayScore}
-                          outcome={awayWin ? "win" : homeWin ? "lose" : ""}
-                        />
-                        <span className={`st${isLive(m.status) ? " live" : ""}`}>
-                          {statusLabel(m.status)}
-                        </span>
-                      </Link>
-                    );
-                  })}
+          <div className="bracket2-wrap">
+            <div className="bracket2">
+              {/* Lado esquerdo: do 16-avos rumo à final */}
+              <BracketCol stage="LAST_32" matches={r32L} />
+              <BracketCol stage="LAST_16" matches={r16L} />
+              <BracketCol stage="QUARTER_FINALS" matches={qfL} />
+              <BracketCol stage="SEMI_FINALS" matches={sfL} />
+
+              {/* Centro: final + disputa de 3º */}
+              <div className="bk2-col center">
+                {finalM && (
+                  <div className="bk2-final">
+                    <span className="bk2-head final">🏆 Final</span>
+                    <div className="bk2-body">
+                      <BracketCard m={finalM} champ />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </section>
+                )}
+                {third && (
+                  <div className="bk2-third">
+                    <span className="bk2-head">3º lugar</span>
+                    <div className="bk2-body">
+                      <BracketCard m={third} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Lado direito: espelhado */}
+              <BracketCol stage="SEMI_FINALS" matches={sfR} />
+              <BracketCol stage="QUARTER_FINALS" matches={qfR} />
+              <BracketCol stage="LAST_16" matches={r16R} />
+              <BracketCol stage="LAST_32" matches={r32R} />
+            </div>
+          </div>
         </>
       )}
     </>
