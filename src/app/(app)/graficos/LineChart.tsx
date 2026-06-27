@@ -8,6 +8,18 @@ export interface Series {
   me?: boolean; // linha do usuário ("você"): mais grossa
 }
 
+// Valores das linhas de grade do eixo Y, sempre múltiplos de 5. Escolhe um passo
+// redondo (múltiplo de 5) mirando ~4 intervalos e vai de 0 até o múltiplo de
+// `passo` imediatamente acima do maior valor.
+function niceTicksMultipleOf5(maxValue: number): number[] {
+  const targetIntervals = 4;
+  const step = Math.max(5, Math.ceil(maxValue / targetIntervals / 5) * 5);
+  const top = Math.max(step, Math.ceil(maxValue / step) * step);
+  const ticks: number[] = [];
+  for (let v = 0; v <= top; v += step) ticks.push(v);
+  return ticks;
+}
+
 export function LineChart({
   labels,
   series,
@@ -29,14 +41,17 @@ export function LineChart({
   const plotH = H - padT - padB;
 
   const n = labels.length;
-  const maxY = Math.max(1, ...series.flatMap((s) => s.values));
+  const dataMax = Math.max(1, ...series.flatMap((s) => s.values));
+
+  // Linhas de grade horizontais sempre em múltiplos de 5, com um passo "redondo"
+  // (5, 10, 15, 20, 25, 50, …) e ~4 intervalos. O topo da escala é a última
+  // linha de grade, então o eixo Y nunca mostra número quebrado (17, 33, 66…).
+  const ticks = niceTicksMultipleOf5(dataMax);
+  const maxY = ticks[ticks.length - 1];
 
   const x = (i: number) => (n <= 1 ? padL : padL + (i * plotW) / (n - 1));
   const y = (v: number) =>
     invert ? padT + (v / maxY) * plotH : padT + (1 - v / maxY) * plotH;
-
-  // Linhas de grade horizontais (5 níveis).
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxY * f));
 
   // Mostra no máximo ~8 rótulos no eixo X para não poluir.
   const labelStep = Math.max(1, Math.ceil(n / 8));

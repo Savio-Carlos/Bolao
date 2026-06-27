@@ -370,7 +370,11 @@ export default async function EstatisticasPage() {
               value={`${Math.round((mine.hits / mine.total) * 100)}`}
               unit="%"
             />
-            <MiniStat label="Palpites pontuados" value={String(mine.total)} />
+            <MiniStat
+              label="Palpites pontuados"
+              value={String(mine.hits)}
+              unit={`de ${mine.total}`}
+            />
             <MiniStat label="Placares cravados" value={String(mine.exact)} />
             <MiniStat
               label="Melhor sequência"
