@@ -46,20 +46,28 @@ async function fetchFromFootballData(apiKey: string): Promise<NormalizedMatch[]>
     );
   }
   const data = (await res.json()) as { matches: FdMatch[] };
-  return data.matches.map((m) => ({
-    externalId: m.id,
-    stage: m.stage,
-    group: m.group ?? null,
-    homeTeam: m.homeTeam?.name ?? null,
-    awayTeam: m.awayTeam?.name ?? null,
-    homeCrest: m.homeTeam?.crest ?? null,
-    awayCrest: m.awayTeam?.crest ?? null,
-    kickoff: new Date(m.utcDate),
-    status: m.status,
-    homeScore: m.score?.fullTime?.home ?? null,
-    awayScore: m.score?.fullTime?.away ?? null,
-    winner: mapWinner(m.score?.winner ?? null),
-  }));
+  return data.matches.map((m) => {
+    const winner = mapWinner(m.score?.winner ?? null);
+    // No mata-mata, o vencedor já é quem avança (a football-data resolve
+    // prorrogação/pênaltis em winner). A ESPN ainda refina por cima.
+    const knockout = m.stage !== "GROUP_STAGE";
+    return {
+      externalId: m.id,
+      stage: m.stage,
+      group: m.group ?? null,
+      homeTeam: m.homeTeam?.name ?? null,
+      awayTeam: m.awayTeam?.name ?? null,
+      homeCrest: m.homeTeam?.crest ?? null,
+      awayCrest: m.awayTeam?.crest ?? null,
+      kickoff: new Date(m.utcDate),
+      status: m.status,
+      homeScore: m.score?.fullTime?.home ?? null,
+      awayScore: m.score?.fullTime?.away ?? null,
+      winner,
+      advancer:
+        knockout && (winner === "HOME" || winner === "AWAY") ? winner : null,
+    };
+  });
 }
 
 // ---- Fallback: openfootball/worldcup.json (sem chave) ----------------------
@@ -138,9 +146,18 @@ async function fetchFromOpenFootball(): Promise<NormalizedMatch[]> {
     const home = hasScore ? ft![0] : null;
     const away = hasScore ? ft![1] : null;
     const kickoff = parseKickoff(m.date, m.time);
+    const stage = ofStage(m);
+    const winner =
+      home === null || away === null
+        ? null
+        : home > away
+          ? "HOME"
+          : away > home
+            ? "AWAY"
+            : "DRAW";
     return {
       externalId: m.num ?? i + 1,
-      stage: ofStage(m),
+      stage,
       group: m.group ? `GROUP_${m.group.replace(/group\s*/i, "").trim()}` : null,
       homeTeam: ofTeamName(m.team1),
       awayTeam: ofTeamName(m.team2),
@@ -150,14 +167,13 @@ async function fetchFromOpenFootball(): Promise<NormalizedMatch[]> {
       status: hasScore ? "FINISHED" : "SCHEDULED",
       homeScore: home,
       awayScore: away,
-      winner:
-        home === null || away === null
-          ? null
-          : home > away
-            ? "HOME"
-            : away > home
-              ? "AWAY"
-              : "DRAW",
+      winner,
+      // openfootball não traz pênaltis; no mata-mata o vencedor do placar serve
+      // de aproximação até a ESPN refinar quem realmente avançou.
+      advancer:
+        stage !== "GROUP_STAGE" && (winner === "HOME" || winner === "AWAY")
+          ? winner
+          : null,
     };
   });
 }
@@ -177,6 +193,7 @@ interface EspnStatusType {
 interface EspnCompetitor {
   homeAway?: "home" | "away";
   score?: string;
+  winner?: boolean; // true no time que avançou (inclui pênaltis)
   team?: { displayName?: string };
 }
 interface EspnEvent {
@@ -196,6 +213,7 @@ interface EspnOverlay {
   homeScore: number | null;
   awayScore: number | null;
   winner: NormalizedMatch["winner"];
+  advancer: NormalizedMatch["advancer"]; // quem avançou (flag winner da ESPN)
 }
 
 // Normaliza nome de seleção p/ comparar entre fontes ("Türkiye"->"turkiye").
@@ -243,6 +261,16 @@ async function fetchEspnOverlays(): Promise<EspnOverlay[]> {
     const live = status !== null;
     const hs = live ? parseEspnScore(home?.score) : null;
     const as = live ? parseEspnScore(away?.score) : null;
+    // Quem avançou: a flag `winner` da ESPN aponta o classificado mesmo quando
+    // a decisão foi nos pênaltis (placar de 90'/prorrogação empatado).
+    const advancer =
+      status === "FINISHED"
+        ? home?.winner
+          ? "HOME"
+          : away?.winner
+            ? "AWAY"
+            : null
+        : null;
     out.push({
       minute: e.date.slice(0, 16),
       homeNorm: normTeam(home?.team?.displayName),
@@ -258,6 +286,7 @@ async function fetchEspnOverlays(): Promise<EspnOverlay[]> {
               ? "AWAY"
               : "DRAW"
           : null,
+      advancer,
     });
   }
   return out;
@@ -298,6 +327,8 @@ function applyEspnOverlay(base: NormalizedMatch[], overlays: EspnOverlay[]): voi
     m.homeScore = pick.homeScore;
     m.awayScore = pick.awayScore;
     m.winner = pick.winner;
+    // Só sobrepõe o classificado quando a ESPN o informa; senão mantém a base.
+    if (pick.advancer) m.advancer = pick.advancer;
   }
 }
 

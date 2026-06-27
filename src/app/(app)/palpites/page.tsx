@@ -33,6 +33,13 @@ function FinishedCard({ m, pred }: { m: Match; pred: Prediction | undefined }) {
     : 0;
   const badge = hasPred ? pointsBadge(pts) : { cls: "zero", text: "sem palpite" };
 
+  // Mata-mata: resultado do palpite de "quem avança".
+  const ko = m.stage !== "GROUP_STAGE";
+  const sideName = (side: string | null): string | null =>
+    side === "HOME" ? m.homeTeam : side === "AWAY" ? m.awayTeam : null;
+  const pickName = sideName(pred?.advancePick ?? null);
+  const advanceBonus = pred?.advancePoints ?? 0;
+
   return (
     <div className="pcard locked">
       <div className="pc-top">
@@ -85,6 +92,16 @@ function FinishedCard({ m, pred }: { m: Match; pred: Prediction | undefined }) {
         </span>
         <span className={`pts-badge ${badge.cls}`}>{badge.text}</span>
       </div>
+      {ko && pickName && (
+        <div className="pc-result" style={{ borderTop: "none", paddingTop: 0 }}>
+          <span>
+            Você cravou que <b>{pickName}</b> avançava
+          </span>
+          <span className={`pts-badge ${advanceBonus > 0 ? "parcial" : "zero"}`}>
+            {advanceBonus > 0 ? `+${advanceBonus} avanço` : "sem bônus"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -115,6 +132,7 @@ export default async function PalpitesPage() {
         kickoff: m.kickoff.toISOString(),
         predHome: p?.homeScore ?? null,
         predAway: p?.awayScore ?? null,
+        advancePick: (p?.advancePick as "HOME" | "AWAY" | null) ?? null,
       };
     });
 

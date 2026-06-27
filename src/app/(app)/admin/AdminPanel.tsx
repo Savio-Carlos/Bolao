@@ -26,6 +26,8 @@ export default function AdminPanel({
   categories,
   resultInitial,
   teams,
+  revealed,
+  semisStarted,
 }: {
   users: AdminUser[];
   myId: number;
@@ -33,6 +35,8 @@ export default function AdminPanel({
   categories: CategoryMeta[];
   resultInitial: ResultValues;
   teams: string[];
+  revealed: boolean;
+  semisStarted: boolean;
 }) {
   const router = useRouter();
   const [newName, setNewName] = useState("");
@@ -40,6 +44,27 @@ export default function AdminPanel({
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<ResultValues>(resultInitial);
+
+  async function setReveal(next: boolean) {
+    setBusy(true);
+    setErr(null);
+    const res = await fetch("/api/admin/reveal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revealed: next }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      flash(
+        setMsg,
+        next ? "Ranking revelado! 🎉" : "Ranking congelado novamente.",
+      );
+      router.refresh();
+    } else {
+      flash(setErr, data.error ?? "Erro ao atualizar a revelação.");
+    }
+    setBusy(false);
+  }
 
   async function saveResult() {
     setBusy(true);
@@ -136,6 +161,49 @@ export default function AdminPanel({
         >
           Sincronizar agora
         </button>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Suspense do bolão</h2>
+        <p className="text-sm text-neutral-500">
+          A partir do início das <b>semifinais</b>, o ranking e os palpites dos
+          jogos finais congelam automaticamente para criar suspense. Quando a
+          Copa acabar, clique em <b>revelar</b> para mostrar o resultado final a
+          todos.
+        </p>
+        <p className="text-sm">
+          Estado atual:{" "}
+          {revealed ? (
+            <span className="font-semibold text-green-600">
+              revelado (ranking aberto)
+            </span>
+          ) : semisStarted ? (
+            <span className="font-semibold text-amber-600">
+              🔒 congelado (semifinais em andamento)
+            </span>
+          ) : (
+            <span className="font-semibold text-neutral-500">
+              aberto — congela sozinho quando as semifinais começarem
+            </span>
+          )}
+        </p>
+        {revealed ? (
+          <button
+            onClick={() => setReveal(false)}
+            disabled={busy}
+            className="self-start rounded-lg border border-black/15 px-4 py-2 font-medium transition hover:bg-black/5 disabled:opacity-50 dark:border-white/20 dark:hover:bg-white/5"
+          >
+            Recongelar ranking
+          </button>
+        ) : (
+          <button
+            onClick={() => setReveal(true)}
+            disabled={busy}
+            className="self-start rounded-lg bg-amber-600 px-4 py-2 font-medium text-white transition hover:bg-amber-700 disabled:opacity-50"
+          >
+            Revelar ranking final
+          </button>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">

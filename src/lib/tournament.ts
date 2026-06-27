@@ -112,3 +112,32 @@ export async function tournamentDeadlineOpen(): Promise<boolean> {
   if (!deadline) return true; // mata-mata ainda não carregado
   return Date.now() < deadline.getTime();
 }
+
+// Início das semifinais — momento em que o ranking "congela" para criar suspense.
+export async function semifinalKickoff(): Promise<Date | null> {
+  const agg = await prisma.match.aggregate({
+    where: { stage: "SEMI_FINALS" },
+    _min: { kickoff: true },
+  });
+  return agg._min.kickoff ?? null;
+}
+
+export interface FreezeState {
+  cutoff: Date | null; // início das semifinais
+  started: boolean; // as semifinais já começaram?
+  revealed: boolean; // admin já revelou o resultado final?
+  frozen: boolean; // ranking/palpites congelados agora?
+}
+
+// O ranking e os palpites dos jogos finais congelam quando as semifinais começam
+// e só "descongelam" quando o admin revela o resultado (botão na área de Admin).
+export async function getFreezeState(): Promise<FreezeState> {
+  const [cutoff, settings] = await Promise.all([
+    semifinalKickoff(),
+    prisma.appSettings.findUnique({ where: { id: 1 } }),
+  ]);
+  const revealed = settings?.rankingRevealed ?? false;
+  const started = cutoff !== null && Date.now() >= cutoff.getTime();
+  const frozen = started && !revealed;
+  return { cutoff, started, revealed, frozen };
+}

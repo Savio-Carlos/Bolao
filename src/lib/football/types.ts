@@ -13,6 +13,7 @@ export interface NormalizedMatch {
   homeScore: number | null;
   awayScore: number | null;
   winner: "HOME" | "AWAY" | "DRAW" | null;
+  advancer: "HOME" | "AWAY" | null; // quem avançou no mata-mata (inclui pênaltis)
 }
 
 // Ordem das fases para exibição no cronograma.
@@ -76,4 +77,16 @@ export function computePoints(
   const predDir = Math.sign(predHome - predAway);
   const realDir = Math.sign(realHome - realAway);
   return predDir === realDir ? 5 : 0;
+}
+
+// Bônus do mata-mata por cravar quem avança. Independe do placar: vale mesmo
+// quando o jogo é decidido nos pênaltis (em que o placar fica empatado).
+export const ADVANCE_POINTS = 5;
+
+export function computeAdvancePoints(
+  pick: string | null | undefined,
+  advancer: string | null | undefined,
+): number {
+  if (!pick || !advancer) return 0;
+  return pick === advancer ? ADVANCE_POINTS : 0;
 }

@@ -39,9 +39,11 @@ export interface EditableMatch {
   kickoff: string; // ISO
   predHome: number | null;
   predAway: number | null;
+  advancePick: "HOME" | "AWAY" | null; // só mata-mata
 }
 
 type Scores = Record<number, { home: string; away: string }>;
+type Picks = Record<number, "HOME" | "AWAY" | "">;
 
 export default function PredictionsEditor({
   matches,
@@ -56,6 +58,11 @@ export default function PredictionsEditor({
         away: m.predAway?.toString() ?? "",
       };
     }
+    return init;
+  });
+  const [picks, setPicks] = useState<Picks>(() => {
+    const init: Picks = {};
+    for (const m of matches) init[m.matchId] = m.advancePick ?? "";
     return init;
   });
   const [saving, setSaving] = useState(false);
@@ -73,6 +80,12 @@ export default function PredictionsEditor({
     return map;
   }, [matches]);
 
+  const initialPicks = useMemo(() => {
+    const map: Picks = {};
+    for (const m of matches) map[m.matchId] = m.advancePick ?? "";
+    return map;
+  }, [matches]);
+
   const filledCount = matches.filter((m) => {
     const cur = scores[m.matchId];
     return cur.home !== "" && cur.away !== "";
@@ -81,6 +94,11 @@ export default function PredictionsEditor({
   function setScore(matchId: number, side: "home" | "away", value: string) {
     const clean = value.replace(/[^0-9]/g, "").slice(0, 2);
     setScores((s) => ({ ...s, [matchId]: { ...s[matchId], [side]: clean } }));
+  }
+
+  // Alterna o palpite de quem avança; clicar no lado já marcado desfaz a escolha.
+  function setPick(matchId: number, side: "HOME" | "AWAY") {
+    setPicks((p) => ({ ...p, [matchId]: p[matchId] === side ? "" : side }));
   }
 
   async function save() {
@@ -92,8 +110,11 @@ export default function PredictionsEditor({
       const cur = scores[m.matchId];
       const ini = initial[m.matchId];
       const filled = cur.home !== "" && cur.away !== "";
-      const changed = cur.home !== ini.home || cur.away !== ini.away;
-      return filled && changed;
+      const scoreChanged = cur.home !== ini.home || cur.away !== ini.away;
+      const ko = m.stage !== "GROUP_STAGE";
+      const pickChanged = ko && picks[m.matchId] !== initialPicks[m.matchId];
+      // O placar é sempre obrigatório p/ salvar; o "quem avança" vai junto.
+      return filled && (scoreChanged || pickChanged);
     });
 
     if (toSave.length === 0) {
@@ -105,6 +126,7 @@ export default function PredictionsEditor({
     let ok = 0;
     for (const m of toSave) {
       const cur = scores[m.matchId];
+      const ko = m.stage !== "GROUP_STAGE";
       const res = await fetch("/api/predictions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,6 +134,7 @@ export default function PredictionsEditor({
           matchId: m.matchId,
           homeScore: Number(cur.home),
           awayScore: Number(cur.away),
+          advancePick: ko ? picks[m.matchId] || null : null,
         }),
       });
       if (res.ok) ok++;
@@ -176,6 +199,27 @@ export default function PredictionsEditor({
                 </div>
               </div>
             </div>
+            {m.stage !== "GROUP_STAGE" && (
+              <div className="pc-advance">
+                <span className="adv-q">Quem avança?</span>
+                <div className="adv-opts">
+                  <button
+                    type="button"
+                    className={`adv-btn${picks[m.matchId] === "HOME" ? " on" : ""}`}
+                    onClick={() => setPick(m.matchId, "HOME")}
+                  >
+                    {m.homeTeam}
+                  </button>
+                  <button
+                    type="button"
+                    className={`adv-btn${picks[m.matchId] === "AWAY" ? " on" : ""}`}
+                    onClick={() => setPick(m.matchId, "AWAY")}
+                  >
+                    {m.awayTeam}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     matchId?: number;
     homeScore?: number;
     awayScore?: number;
+    advancePick?: string | null;
   };
   const matchId = Number(body.matchId);
   const homeScore = Number(body.homeScore);
@@ -33,6 +34,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Palpite inválido." }, { status: 400 });
   }
 
+  if (
+    body.advancePick != null &&
+    body.advancePick !== "HOME" &&
+    body.advancePick !== "AWAY"
+  ) {
+    return NextResponse.json(
+      { error: "Palpite de classificação inválido." },
+      { status: 400 },
+    );
+  }
+
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match) {
     return NextResponse.json({ error: "Jogo não encontrado." }, { status: 404 });
@@ -44,10 +56,14 @@ export async function POST(req: Request) {
     );
   }
 
+  // "Quem avança" só faz sentido no mata-mata; na fase de grupos fica sempre null.
+  const advancePick =
+    match.stage !== "GROUP_STAGE" ? body.advancePick ?? null : null;
+
   await prisma.prediction.upsert({
     where: { userId_matchId: { userId: user.id, matchId } },
-    create: { userId: user.id, matchId, homeScore, awayScore },
-    update: { homeScore, awayScore },
+    create: { userId: user.id, matchId, homeScore, awayScore, advancePick },
+    update: { homeScore, awayScore, advancePick },
   });
 
   return NextResponse.json({ ok: true });

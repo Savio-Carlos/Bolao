@@ -11,6 +11,7 @@ import {
 import { groupLabel, stageLabel, isOpenForPrediction } from "@/lib/football/types";
 import { getCurrentUser } from "@/lib/session";
 import { computeRanking } from "@/lib/ranking";
+import { getFreezeState } from "@/lib/tournament";
 import { Crest } from "@/components/Crest";
 import { Countdown } from "@/components/Countdown";
 import { LiveRefresh } from "@/components/LiveRefresh";
@@ -239,18 +240,26 @@ function MatchCard({ m, num }: { m: Match; num: number }) {
 }
 
 export default async function CronogramaPage() {
+  const freeze = await getFreezeState();
+  // Congelado nas semis: a posição mostrada é a foto de quando as semis começaram.
+  const predWhere = freeze.frozen
+    ? { points: { not: null }, match: { kickoff: { lt: freeze.cutoff! } } }
+    : { points: { not: null } };
+
   const [matches, me, users, predictions, tournamentBets] = await Promise.all([
     prisma.match.findMany({ orderBy: { kickoff: "asc" } }),
     getCurrentUser(),
     prisma.user.findMany({ orderBy: { username: "asc" } }),
     prisma.prediction.findMany({
-      where: { points: { not: null } },
-      select: { userId: true, points: true },
+      where: predWhere,
+      select: { userId: true, points: true, advancePoints: true },
     }),
-    prisma.tournamentBet.findMany({
-      where: { points: { not: null } },
-      select: { userId: true, points: true },
-    }),
+    freeze.frozen
+      ? Promise.resolve([])
+      : prisma.tournamentBet.findMany({
+          where: { points: { not: null } },
+          select: { userId: true, points: true },
+        }),
   ]);
 
   // Posição do usuário no ranking geral (reaproveita a mesma lógica da página de Ranking).

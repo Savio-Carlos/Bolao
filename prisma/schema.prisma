@@ -36,6 +36,15 @@ model TournamentBet {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Configurações globais do app (linha única, id = 1).
+model AppSettings {
+  id Int @id @default(1)
+  // Suspense do bolão: a partir do início das semifinais o ranking e os palpites
+  // dos jogos finais ficam "congelados" até o admin revelar o resultado.
+  rankingRevealed Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+}
+
 // Gabarito oficial (linha única, id = 1) preenchido pelo admin ao fim da Copa.
 model TournamentResult {
   id         Int      @id @default(1)
@@ -63,7 +72,11 @@ model Match {
   status      String       @default("SCHEDULED") // SCHEDULED, TIMED, IN_PLAY, PAUSED, FINISHED, ...
   homeScore   Int?
   awayScore   Int?
-  winner      String? // HOME, AWAY, DRAW
+  winner      String? // HOME, AWAY, DRAW — resultado do tempo normal/prorrogação
+  // Quem avançou no mata-mata (inclui decisão por pênaltis). null na fase de
+  // grupos e enquanto o jogo não é decidido. Pode diferir de winner (ex.: 1×1
+  // nos 90' e classificação nos pênaltis -> winner=DRAW, advancer=HOME/AWAY).
+  advancer    String? // HOME, AWAY
   updatedAt   DateTime     @updatedAt
   predictions Prediction[]
 
@@ -77,6 +90,10 @@ model Prediction {
   homeScore Int
   awayScore Int
   points    Int?
+  // Mata-mata: palpite de quem avança (HOME/AWAY) e o bônus por acertá-lo.
+  // Independente do placar — vale mesmo quando o jogo vai aos pênaltis.
+  advancePick   String? // HOME, AWAY
+  advancePoints Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

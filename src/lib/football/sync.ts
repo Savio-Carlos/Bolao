@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { fetchMatches } from "./client";
-import { computePoints } from "./types";
+import { computeAdvancePoints, computePoints } from "./types";
 
 export interface SyncResult {
   fetched: number;
@@ -28,6 +28,7 @@ export async function syncMatches(): Promise<SyncResult> {
       homeScore: true,
       awayScore: true,
       winner: true,
+      advancer: true,
     },
   });
   const prev = new Map(existing.map((e) => [e.externalId, e]));
@@ -47,6 +48,7 @@ export async function syncMatches(): Promise<SyncResult> {
       homeScore: m.homeScore ?? ex?.homeScore ?? null,
       awayScore: m.awayScore ?? ex?.awayScore ?? null,
       winner: m.winner ?? ex?.winner ?? null,
+      advancer: m.advancer ?? ex?.advancer ?? null,
     };
     await prisma.match.upsert({
       where: { externalId: m.externalId },
@@ -66,19 +68,27 @@ export async function syncMatches(): Promise<SyncResult> {
   };
 }
 
-// Recalcula points de todos os palpites de jogos encerrados com placar válido.
-// Retorna quantos palpites tiveram a pontuação alterada.
+// Recalcula points de todos os palpites de jogos encerrados com placar válido,
+// mais o bônus de "quem avança" no mata-mata. Retorna quantos palpites tiveram
+// alguma das pontuações alterada.
 export async function recalculatePoints(): Promise<number> {
   const finishedMatches = await prisma.match.findMany({
     where: { status: "FINISHED", homeScore: { not: null }, awayScore: { not: null } },
-    select: { id: true, homeScore: true, awayScore: true },
+    select: { id: true, homeScore: true, awayScore: true, advancer: true },
   });
 
   let updated = 0;
   for (const match of finishedMatches) {
     const predictions = await prisma.prediction.findMany({
       where: { matchId: match.id },
-      select: { id: true, homeScore: true, awayScore: true, points: true },
+      select: {
+        id: true,
+        homeScore: true,
+        awayScore: true,
+        points: true,
+        advancePick: true,
+        advancePoints: true,
+      },
     });
     for (const p of predictions) {
       const points = computePoints(
@@ -87,10 +97,16 @@ export async function recalculatePoints(): Promise<number> {
         match.homeScore!,
         match.awayScore!,
       );
-      if (p.points !== points) {
+      // Bônus do mata-mata: null quando o jogo não tem classificado (fase de
+      // grupos) ou o palpiteiro não escolheu quem avança.
+      const advancePoints =
+        match.advancer && p.advancePick
+          ? computeAdvancePoints(p.advancePick, match.advancer)
+          : null;
+      if (p.points !== points || p.advancePoints !== advancePoints) {
         await prisma.prediction.update({
           where: { id: p.id },
-          data: { points },
+          data: { points, advancePoints },
         });
         updated++;
       }

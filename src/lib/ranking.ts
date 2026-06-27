@@ -7,19 +7,36 @@ export interface RankingRow<U extends { id: number }> {
   bonus: number;
   exact: number; // placares cravados (10 pts)
   partial: number; // acertou vencedor/empate (5 pts)
+  advance: number; // bônus do mata-mata por acertar quem avança
 }
 
 export function computeRanking<U extends { id: number }>(
   users: U[],
-  predictions: { userId: number; points: number | null }[],
+  predictions: {
+    userId: number;
+    points: number | null;
+    advancePoints?: number | null;
+  }[],
   tournamentBets: { userId: number; points: number | null }[],
 ): RankingRow<U>[] {
   const stats = new Map<
     number,
-    { total: number; bonus: number; exact: number; partial: number }
+    {
+      total: number;
+      bonus: number;
+      exact: number;
+      partial: number;
+      advance: number;
+    }
   >();
   for (const u of users)
-    stats.set(u.id, { total: 0, bonus: 0, exact: 0, partial: 0 });
+    stats.set(u.id, {
+      total: 0,
+      bonus: 0,
+      exact: 0,
+      partial: 0,
+      advance: 0,
+    });
 
   for (const p of predictions) {
     const s = stats.get(p.userId);
@@ -27,6 +44,10 @@ export function computeRanking<U extends { id: number }>(
     s.total += p.points ?? 0;
     if (p.points === 10) s.exact++;
     else if (p.points === 5) s.partial++;
+    // Bônus de "quem avança" entra no total, mas fora da conta de exatos/parciais.
+    const adv = p.advancePoints ?? 0;
+    s.total += adv;
+    s.advance += adv;
   }
   for (const b of tournamentBets) {
     const s = stats.get(b.userId);

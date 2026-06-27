@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { SIMPLE_CATEGORIES } from "@/lib/tournament";
+import { SIMPLE_CATEGORIES, getFreezeState } from "@/lib/tournament";
 import AdminPanel, { type AdminUser, type ResultValues } from "./AdminPanel";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function AdminPage() {
   if (!me) redirect("/login");
   if (!me.isAdmin) redirect("/");
 
-  const [users, matchCount, result, groupMatches] = await Promise.all([
+  const [users, matchCount, result, groupMatches, freeze] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.match.count(),
     prisma.tournamentResult.findUnique({ where: { id: 1 } }),
@@ -19,6 +19,7 @@ export default async function AdminPage() {
       where: { stage: "GROUP_STAGE" },
       select: { homeTeam: true, awayTeam: true },
     }),
+    getFreezeState(),
   ]);
 
   const list: AdminUser[] = users.map((u) => ({
@@ -60,6 +61,8 @@ export default async function AdminPage() {
         categories={SIMPLE_CATEGORIES}
         resultInitial={resultInitial}
         teams={teams}
+        revealed={freeze.revealed}
+        semisStarted={freeze.started}
       />
     </div>
   );

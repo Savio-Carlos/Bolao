@@ -1,22 +1,36 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { computeRanking } from "@/lib/ranking";
+import { getFreezeState } from "@/lib/tournament";
 
 export const dynamic = "force-dynamic";
 
 export default async function RankingPage() {
   const me = await getCurrentUser();
+  const freeze = await getFreezeState();
+
+  // Congelado: o ranking mostra a foto de quando as semifinais começaram —
+  // só palpites de jogos que rolaram antes do corte entram na conta.
+  const predWhere = freeze.frozen
+    ? {
+        points: { not: null },
+        match: { kickoff: { lt: freeze.cutoff! } },
+      }
+    : { points: { not: null } };
 
   const [users, predictions, tournamentBets] = await Promise.all([
     prisma.user.findMany({ orderBy: { username: "asc" } }),
     prisma.prediction.findMany({
-      where: { points: { not: null } },
-      select: { userId: true, points: true },
+      where: predWhere,
+      select: { userId: true, points: true, advancePoints: true },
     }),
-    prisma.tournamentBet.findMany({
-      where: { points: { not: null } },
-      select: { userId: true, points: true },
-    }),
+    // Durante o congelamento o bônus da Copa (corrigido só no fim) fica de fora.
+    freeze.frozen
+      ? Promise.resolve([])
+      : prisma.tournamentBet.findMany({
+          where: { points: { not: null } },
+          select: { userId: true, points: true },
+        }),
   ]);
 
   const rows = computeRanking(users, predictions, tournamentBets);
@@ -43,6 +57,14 @@ export default async function RankingPage() {
         </p>
         <div className="page-rule" />
       </header>
+
+      {freeze.frozen && (
+        <div className="freeze-banner">
+          🔒 <b>Ranking congelado nas semifinais.</b> As pontuações das semis e
+          da final ficam em segredo — o resultado é revelado ao fim da Copa pra
+          ninguém perder o suspense de quem ganhou o bolão.
+        </div>
+      )}
 
       {podium.length > 0 && (
         <section className="podium">

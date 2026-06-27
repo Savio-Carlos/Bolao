@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { dayKey } from "@/lib/format";
 import { stageLabel, stageRank } from "@/lib/football/types";
+import { computeRanking } from "@/lib/ranking";
+import { getFreezeState } from "@/lib/tournament";
 
 export const dynamic = "force-dynamic";
 
@@ -67,18 +69,59 @@ function StatCard({
   );
 }
 
+// Célula compacta do painel pessoal ("Minhas estatísticas").
+function MiniStat({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+}) {
+  return (
+    <div className="mini">
+      <p className="mini-label">{label}</p>
+      <p className="mini-value">
+        {value}
+        {unit && <small> {unit}</small>}
+      </p>
+    </div>
+  );
+}
+
 export default async function EstatisticasPage() {
   const me = await getCurrentUser();
-  const preds = await prisma.prediction.findMany({
-    where: { points: { not: null } },
-    include: {
-      match: {
-        select: { stage: true, kickoff: true, homeScore: true, awayScore: true },
+  const freeze = await getFreezeState();
+  // Congelado nas semis: as estatísticas e a posição também ficam na foto do
+  // corte, pra não entregar o desfecho do bolão antes da revelação.
+  const predWhere = freeze.frozen
+    ? { points: { not: null }, match: { kickoff: { lt: freeze.cutoff! } } }
+    : { points: { not: null } };
+  const [preds, users, tournamentBets] = await Promise.all([
+    prisma.prediction.findMany({
+      where: predWhere,
+      include: {
+        match: {
+          select: {
+            stage: true,
+            kickoff: true,
+            homeScore: true,
+            awayScore: true,
+          },
+        },
+        user: { select: { id: true, username: true } },
       },
-      user: { select: { id: true, username: true } },
-    },
-    orderBy: { match: { kickoff: "asc" } },
-  });
+      orderBy: { match: { kickoff: "asc" } },
+    }),
+    prisma.user.findMany({ select: { id: true } }),
+    freeze.frozen
+      ? Promise.resolve([])
+      : prisma.tournamentBet.findMany({
+          where: { points: { not: null } },
+          select: { userId: true, points: true },
+        }),
+  ]);
 
   if (preds.length === 0) {
     return (
@@ -255,6 +298,22 @@ export default async function EstatisticasPage() {
     (a, b) => stageRank(a) - stageRank(b),
   );
 
+  // ---- Painel pessoal do usuário logado ------------------------------------
+  // Reaproveita o UserStat já calculado e a posição no ranking geral (com bônus).
+  const ranking = computeRanking(users, preds, tournamentBets);
+  const myRankIdx = me ? ranking.findIndex((r) => r.user.id === me.id) : -1;
+  const myRank = myRankIdx >= 0 ? ranking[myRankIdx] : null;
+  const mine = me ? byUser.get(me.id) ?? null : null;
+  const myStagePoints =
+    mine && me
+      ? stagesPresent
+          .map((stage) => ({
+            stage,
+            points: byStage.get(stage)?.get(me.id) ?? 0,
+          }))
+          .filter((s) => s.points > 0)
+      : [];
+
   return (
     <>
       <header className="page-head">
@@ -269,6 +328,93 @@ export default async function EstatisticasPage() {
         </p>
         <div className="page-rule" />
       </header>
+
+      {mine && myRank && (
+        <>
+          <div className="section-head">
+            <h2>
+              <span className="star">★</span> Minhas estatísticas
+            </h2>
+            <span className="bar" />
+            <span className="daytag">{me!.username}</span>
+          </div>
+
+          <section className="strip" style={{ gridTemplateColumns: "1fr" }}>
+            <div className="ticket">
+              <div className="medal">{myRankIdx + 1}º</div>
+              <div style={{ flex: 1 }}>
+                <p className="label">Sua posição no ranking geral</p>
+                <p className="big">
+                  {myRank.total} <small>pts em {ranking.length} jogadores</small>
+                </p>
+                <div className="ticket-meta">
+                  <span>
+                    <b>{myRank.exact}</b> cravados
+                  </span>
+                  <span>
+                    <b>{myRank.partial}</b> parciais
+                  </span>
+                  {myRank.bonus > 0 && (
+                    <span>
+                      <b>{myRank.bonus}</b> de bônus
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="mini-grid">
+            <MiniStat
+              label="Aproveitamento"
+              value={`${Math.round((mine.hits / mine.total) * 100)}`}
+              unit="%"
+            />
+            <MiniStat label="Palpites pontuados" value={String(mine.total)} />
+            <MiniStat label="Placares cravados" value={String(mine.exact)} />
+            <MiniStat
+              label="Melhor sequência"
+              value={mine.bestHit > 0 ? String(mine.bestHit) : "—"}
+              unit={mine.bestHit > 0 ? "seguidos" : undefined}
+            />
+            <MiniStat
+              label="Gols por palpite"
+              value={fmtDec(mine.goalsSum / mine.total)}
+            />
+            {mine.errN > 0 && (
+              <MiniStat
+                label="Erro médio de placar"
+                value={fmtDec(mine.errSum / mine.errN)}
+                unit="gols"
+              />
+            )}
+            <MiniStat
+              label="Dia mais inspirado"
+              value={mine.bestDay > 0 ? String(mine.bestDay) : "—"}
+              unit={mine.bestDay > 0 ? "pts" : undefined}
+            />
+            <MiniStat label="Palpites de empate" value={String(mine.draws)} />
+          </section>
+
+          {myStagePoints.length > 0 && (
+            <div className="mini-fases">
+              {myStagePoints.map(({ stage, points }) => (
+                <span className="mini-fase" key={stage}>
+                  {stageLabel(stage)} <b>{points}</b>
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="section-head">
+            <h2>
+              <span className="star">★</span> Recordes do bolão
+            </h2>
+            <span className="bar" />
+            <span className="daytag">Quem manda em cada quesito</span>
+          </div>
+        </>
+      )}
 
       <section className="stat-grid">
         <StatCard

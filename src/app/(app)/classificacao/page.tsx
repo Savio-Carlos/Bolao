@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { dayKey, formatTime, isLive } from "@/lib/format";
 import { stageLabel } from "@/lib/football/types";
 import { computeGroupStandings, computeThirdPlaceRanking } from "@/lib/standings";
+import { bracketHalves } from "@/lib/bracket";
 import { Crest } from "@/components/Crest";
 
 export const dynamic = "force-dynamic";
@@ -134,15 +135,12 @@ export default async function ClassificacaoPage() {
     byStage.get(m.stage)!.push(m);
   }
   const ms = (s: string) => byStage.get(s) ?? [];
-  // Divide cada fase em dois lados, p/ o chaveamento espelhado com a final no meio.
-  const half = (a: Match[]): [Match[], Match[]] => {
-    const h = Math.ceil(a.length / 2);
-    return [a.slice(0, h), a.slice(h)];
-  };
-  const [r32L, r32R] = half(ms("LAST_32"));
-  const [r16L, r16R] = half(ms("LAST_16"));
-  const [qfL, qfR] = half(ms("QUARTER_FINALS"));
-  const [sfL, sfR] = half(ms("SEMI_FINALS"));
+  // Divide cada fase nas duas metades do chaveamento na ORDEM DA CHAVE (não do
+  // relógio), p/ o chaveamento espelhado com a final no meio. Ver lib/bracket.ts.
+  const [r32L, r32R] = bracketHalves("LAST_32", ms("LAST_32"));
+  const [r16L, r16R] = bracketHalves("LAST_16", ms("LAST_16"));
+  const [qfL, qfR] = bracketHalves("QUARTER_FINALS", ms("QUARTER_FINALS"));
+  const [sfL, sfR] = bracketHalves("SEMI_FINALS", ms("SEMI_FINALS"));
   const finalM = ms("FINAL")[0] ?? null;
   const third = ms("THIRD_PLACE")[0] ?? null;
 
