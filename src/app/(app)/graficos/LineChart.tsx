@@ -25,11 +25,13 @@ export function LineChart({
   series,
   invert = false,
   unit = "",
+  rank = false,
 }: {
   labels: string[];
   series: Series[];
   invert?: boolean; // true: valor 0 no topo (usado em "diferença para o líder")
   unit?: string;
+  rank?: boolean; // true: eixo de posições inteiras (1,2,3…N), sem o zero
 }) {
   const W = 640;
   const H = 260;
@@ -41,17 +43,32 @@ export function LineChart({
   const plotH = H - padT - padB;
 
   const n = labels.length;
-  const dataMax = Math.max(1, ...series.flatMap((s) => s.values));
+  const allValues = series.flatMap((s) => s.values);
 
-  // Linhas de grade horizontais sempre em múltiplos de 5, com um passo "redondo"
-  // (5, 10, 15, 20, 25, 50, …) e ~4 intervalos. O topo da escala é a última
-  // linha de grade, então o eixo Y nunca mostra número quebrado (17, 33, 66…).
-  const ticks = niceTicksMultipleOf5(dataMax);
-  const maxY = ticks[ticks.length - 1];
+  // Linhas de grade do eixo Y. No modo "rank" são as posições inteiras (1,2,3…N)
+  // sem o zero — com poucos jogadores a escala de 5 em 5 não fazia sentido.
+  // Caso contrário, múltiplos de 5 redondos, com o topo na última linha (assim o
+  // eixo nunca mostra número quebrado tipo 17, 33, 66…).
+  let ticks: number[];
+  let yMin: number;
+  let yMax: number;
+  if (rank) {
+    yMin = Math.max(1, Math.floor(Math.min(...allValues)));
+    yMax = Math.max(yMin, Math.ceil(Math.max(...allValues)));
+    ticks = [];
+    for (let v = yMin; v <= yMax; v++) ticks.push(v);
+  } else {
+    ticks = niceTicksMultipleOf5(Math.max(1, ...allValues));
+    yMin = 0;
+    yMax = ticks[ticks.length - 1];
+  }
+  const span = yMax - yMin || 1;
 
   const x = (i: number) => (n <= 1 ? padL : padL + (i * plotW) / (n - 1));
   const y = (v: number) =>
-    invert ? padT + (v / maxY) * plotH : padT + (1 - v / maxY) * plotH;
+    invert
+      ? padT + ((v - yMin) / span) * plotH
+      : padT + (1 - (v - yMin) / span) * plotH;
 
   // Mostra no máximo ~8 rótulos no eixo X para não poluir.
   const labelStep = Math.max(1, Math.ceil(n / 8));
