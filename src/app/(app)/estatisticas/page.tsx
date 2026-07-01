@@ -177,7 +177,9 @@ export default async function EstatisticasPage() {
       };
       byUser.set(p.user.id, s);
     }
-    const pts = p.points ?? 0;
+    const pts = p.points ?? 0; // pontos de placar (define acerto/erro e cravada)
+    // Total que conta no ranking = placar + bônus de "quem avança" (mata-mata).
+    const scored = pts + (p.advancePoints ?? 0);
     const hit = pts > 0;
     s.total++;
     if (hit) {
@@ -211,16 +213,16 @@ export default async function EstatisticasPage() {
     const key = `${p.homeScore}-${p.awayScore}`;
     scoreCount.set(key, (scoreCount.get(key) ?? 0) + 1);
 
-    // Pontos por dia (para "dia inspirado").
+    // Pontos por dia (para "dia inspirado") — inclui o bônus de "quem avança".
     const day = dayKey(p.match.kickoff);
     if (!dayPts.has(p.user.id)) dayPts.set(p.user.id, new Map());
     const dm = dayPts.get(p.user.id)!;
-    dm.set(day, (dm.get(day) ?? 0) + pts);
+    dm.set(day, (dm.get(day) ?? 0) + scored);
 
     const stage = p.match.stage;
     if (!byStage.has(stage)) byStage.set(stage, new Map());
     const sm = byStage.get(stage)!;
-    sm.set(p.user.id, (sm.get(p.user.id) ?? 0) + pts);
+    sm.set(p.user.id, (sm.get(p.user.id) ?? 0) + scored);
   }
 
   // Melhor dia de cada um (maior soma de pontos num único dia).

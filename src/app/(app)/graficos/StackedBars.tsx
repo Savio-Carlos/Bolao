@@ -9,11 +9,14 @@ export interface BarRow {
   zero: number; // nº de palpites zerados
   exactPts: number; // exact * 10
   partialPts: number; // partial * 5
-  total: number; // exactPts + partialPts
+  advancePts: number; // bônus de "quem avança" no mata-mata
+  total: number; // exactPts + partialPts + advancePts
 }
 
 export function StackedBars({ rows }: { rows: BarRow[] }) {
   const max = Math.max(1, ...rows.map((r) => r.total));
+  // Só mostra a legenda/segmento de avanço quando já houver pontos de mata-mata.
+  const anyAdvance = rows.some((r) => r.advancePts > 0);
   return (
     <div className="sbars">
       <div className="legend-line">
@@ -25,6 +28,12 @@ export function StackedBars({ rows }: { rows: BarRow[] }) {
           <span className="sw" style={{ background: "var(--green)" }} /> Parciais
           (+5)
         </span>
+        {anyAdvance && (
+          <span className="li">
+            <span className="sw" style={{ background: "var(--chart-4)" }} /> Avanço
+            (+5)
+          </span>
+        )}
       </div>
       {rows.map((r) => (
         <div className={`sbar-row${r.me ? " me" : ""}`} key={r.name}>
@@ -42,6 +51,14 @@ export function StackedBars({ rows }: { rows: BarRow[] }) {
               className="sbar-seg partial"
               style={{ width: `${(r.partialPts / max) * 100}%` }}
               title={`${r.partial} parcial(is) · ${r.partialPts} pts`}
+            />
+            <div
+              className="sbar-seg"
+              style={{
+                width: `${(r.advancePts / max) * 100}%`,
+                background: "var(--chart-4)",
+              }}
+              title={`avanço · ${r.advancePts} pts`}
             />
           </div>
           <span className="sbar-total">{r.total}</span>

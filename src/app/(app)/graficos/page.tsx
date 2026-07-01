@@ -67,6 +67,8 @@ export default async function GraficosPage() {
   const stagePts = new Map<number, Map<string, number>>();
   // Acertos de "quem avança" no mata-mata: userId -> { acertos, total decidido }.
   const advance = new Map<number, { hit: number; total: number }>();
+  // Pontos de bônus de "quem avança" por jogador (para a composição dos pontos).
+  const advancePtsByUser = new Map<number, number>();
   // Frequência de cada placar palpitado, para o mapa de calor.
   const scoreGrid = new Map<string, number>();
   let maxGoal = 0;
@@ -80,6 +82,13 @@ export default async function GraficosPage() {
     if (!stagePts.has(p.user.id)) stagePts.set(p.user.id, new Map());
     const sp = stagePts.get(p.user.id)!;
     sp.set(p.match.stage, (sp.get(p.match.stage) ?? 0) + scored);
+
+    if (p.advancePoints) {
+      advancePtsByUser.set(
+        p.user.id,
+        (advancePtsByUser.get(p.user.id) ?? 0) + p.advancePoints,
+      );
+    }
 
     // Acerto de "quem avança": só conta jogos do mata-mata já decididos em que
     // a pessoa escolheu um lado.
@@ -189,6 +198,7 @@ export default async function GraficosPage() {
   // Composição dos pontos por jogador (ordenado pelo total final).
   const barRows: BarRow[] = ordered.map((id) => {
     const b = breakdown.get(id) ?? { exact: 0, partial: 0, zero: 0 };
+    const advancePts = advancePtsByUser.get(id) ?? 0;
     return {
       name: nameById.get(id)!,
       me: me?.id === id,
@@ -197,7 +207,8 @@ export default async function GraficosPage() {
       zero: b.zero,
       exactPts: b.exact * 10,
       partialPts: b.partial * 5,
-      total: b.exact * 10 + b.partial * 5,
+      advancePts,
+      total: b.exact * 10 + b.partial * 5 + advancePts,
     };
   });
 
@@ -391,10 +402,10 @@ export default async function GraficosPage() {
         <span className="daytag">De onde vêm os pontos</span>
       </div>
       <div className="chart-card">
-        <h3>Cravadas vs. parciais</h3>
+        <h3>De onde vêm os pontos</h3>
         <p className="desc">
-          Quanto do total de cada jogador veio de placar cravado (+10) e quanto
-          de acerto parcial (+5).
+          Quanto do total de cada jogador veio de placar cravado (+10), de
+          acerto parcial (+5) e do bônus de quem avança no mata-mata (+5).
         </p>
         <StackedBars rows={barRows} />
       </div>
